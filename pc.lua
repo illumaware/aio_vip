@@ -19,7 +19,7 @@ f:Toggle("💎 AutoBuy Gem Trader", function(bool)
     if ABGemTrader == true then warn("[Debug] Enabled AutoBuy Gem Trader") end
 end)
 
-f:Toggle("💎 AutoBuy Magic Shop", function(bool)
+f:Toggle("AutoBuy Magic Shop", function(bool)
     shared.toggle = bool
     ABMagicShop = bool
     if ABMagicShop == true then warn("[Debug] Enabled AutoBuy Magic Shop") end
