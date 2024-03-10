@@ -1,5 +1,13 @@
 -- loadstring(game:HttpGet("https://raw.githubusercontent.com/illumaware/c/main/pc.lua"))()
 
+--[[
+    TODO:
+    Auto-Craft
+    Auto-Kraken
+    Auto-Minigames
+    Auto-Hatch Pets
+]]--
+
 local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
 local Window = OrionLib:MakeWindow({Name = "[Pet Catchers] AIO", HidePremium = true, SaveConfig = false, ConfigFolder = "Orion"})
 
@@ -21,7 +29,7 @@ local auto = Window:MakeTab({
 	PremiumOnly = false
 })
 local autobuy = auto:AddSection({
-	Name = "Autobuy"
+	Name = "Shops"
 })
 local autoshrines = auto:AddSection({
 	Name = "Shrines"
@@ -33,6 +41,20 @@ local quest = auto:AddSection({
 	Name = "Quests"
 })
 
+local autofarm = Window:MakeTab({
+	Name = "AutoFarm",
+	Icon = "rbxassetid://4483345998",
+	PremiumOnly = false
+})
+local Estats = autofarm:AddSection({
+	Name = "Enemy Stats"
+})
+local enemynames = Estats:AddLabel("Enemy Name: None")
+local enemynum = Estats:AddLabel("No Enemies")
+local afmain = autofarm:AddSection({
+	Name = "Main"
+})
+
 local misc = Window:MakeTab({
 	Name = "Misc",
 	Icon = "rbxassetid://4483345998",
@@ -41,21 +63,21 @@ local misc = Window:MakeTab({
 
 local rstorage = game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote
 local codes = {"runes", "lucky", "cherry", "cherries", "gravypet", "update1", "russoplays", "release", "void", "ilovefishing", "brite"}
-local shrines = {"egg", "gem", "cube", "berry", "radioactive", "better-cube", "cherry", "ticket", "rune"}
-local vu = game:service'VirtualUser'
+local shrinenames = {"egg", "gem", "cube", "berry", "radioactive", "better-cube", "cherry", "ticket", "rune"}
+local vu = game:GetService("VirtualUser")
 local slp = game:GetService("Players").LocalPlayer
 local sui = slp.PlayerGui.ScreenGui
 local lp = game.Players.LocalPlayer.Character.Humanoid
 local quests = sui.Quests.List:GetChildren()
 
-game:service'Players'.LocalPlayer.Idled:connect(function()
+slp.Idled:connect(function()
     vu:CaptureController()
     vu:ClickButton2(Vector2.new())
 end)
 
 
 -- MAIN
-main:AddToggle({  -- Godmode
+local gm = main:AddToggle({  -- Godmode
 	Name = "🛡️ Godmode",
 	Default = false,
 	Callback = function(Value)
@@ -64,6 +86,12 @@ main:AddToggle({  -- Godmode
             lp.MaxHealth = math.huge
             lp.Health = math.huge
             warn("[Debug] ✅ Enabled Godmode")
+            OrionLib:MakeNotification({
+                Name = "Godmode",
+                Content = "Enabled Godmode",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
         else
             lp.MaxHealth = 800
             lp.Health = 800
@@ -77,11 +105,16 @@ main:AddDropdown({  -- Teleport
 	Callback = function(Value)
         if Value ~= "The Blackmarket" and Value ~= "The Summit" then
 		    rstorage.Event:FireServer("TeleportBeacon", Value, "Spawn")
-            warn("[Debug] ✅ Teleported to " .. Value)
         else
             rstorage.Event:FireServer("TeleportBeacon", "Magma Basin", Value)
-            warn("[Debug] ✅ Teleported to " .. Value)
         end
+        warn("[Debug] ✅ Teleported to " .. Value)
+        OrionLib:MakeNotification({
+            Name = "Teleport",
+            Content = "Teleported to " .. Value,
+            Image = "rbxassetid://4483345998",
+            Time = 5
+        })
 	end
 })
 
@@ -92,8 +125,8 @@ elixrs:AddToggle({  -- Auto-Use Elixir
 	Default = false,
 	Callback = function(Value)
         AUElixir = Value
-        if AUElixir == true then warn("[Debug] ✅ Enabled Auto-Use Elixir") end    
-	end    
+        if AUElixir then warn("[Debug] ✅ Enabled Auto-Use Elixir") end    
+	end
 })
 elixrs:AddDropdown({  -- Choose Elixir
 	Name = "🧪 Choose Elixir",
@@ -111,42 +144,42 @@ fishing:AddToggle({  -- Auto-Sell Fish
 	Default = false,
 	Callback = function(Value)
         ASFish = Value
-        if ASFish == true then warn("[Debug] ✅ Enabled Auto-Sell Fish") end
-	end    
+        if ASFish then warn("[Debug] ✅ Enabled Auto-Sell Fish") end
+	end
 })
 
 
 -- AUTOBUY
 autobuy:AddToggle({  -- Buy Auburn Shop
-	Name = "💰 Buy Auburn Shop",
+	Name = "💰 Auto-Buy Auburn Shop",
 	Default = false,
 	Callback = function(Value)
         ABAuburnShop = Value
-        if ABAuburnShop == true then warn("[Debug] ✅ Enabled Auto-Buy Auburn Shop") end
-	end    
+        if ABAuburnShop then warn("[Debug] ✅ Enabled Auto-Buy Auburn Shop") end
+	end
 })
 autobuy:AddToggle({  -- Buy Magic Shop
-	Name = "💰 Buy Magic Shop",
+	Name = "💰 Auto-Buy Magic Shop",
 	Default = false,
 	Callback = function(Value)
         ABMagicShop = Value
-        if ABMagicShop == true then warn("[Debug] ✅ Enabled Auto-Buy Magic Shop") end
+        if ABMagicShop then warn("[Debug] ✅ Enabled Auto-Buy Magic Shop") end
     end
 })
 autobuy:AddToggle({  -- Buy Gem Trader
-	Name = "💎 Buy Gem Trader",
+	Name = "💎 Auto-Buy Gem Trader",
 	Default = false,
 	Callback = function(Value)
         ABGemTrader = Value
-        if ABGemTrader == true then warn("[Debug] ✅ Enabled Auto-Buy Gem Trader") end
+        if ABGemTrader then warn("[Debug] ✅ Enabled Auto-Buy Gem Trader") end
 	end    
 })
 autobuy:AddToggle({  -- Buy Blackmarket
-	Name = "💎 Buy Blackmarket",
+	Name = "💎 Auto-Buy Blackmarket",
 	Default = false,
 	Callback = function(Value)
         ABBlackmarket = Value
-        if ABBlackmarket == true then warn("[Debug] ✅ Enabled Auto-Buy Blackmarket") end
+        if ABBlackmarket then warn("[Debug] ✅ Enabled Auto-Buy Blackmarket") end
     end
 })
 
@@ -157,7 +190,7 @@ autoshrines:AddToggle({  -- Auto-Collect Shrines
 	Default = false,
 	Callback = function(Value)
         ACShrines = Value
-        if ACShrines == true then warn("[Debug] ✅ Enabled Auto-Collect shrines") end
+        if ACShrines then warn("[Debug] ✅ Enabled Auto-Collect shrines") end
 	end
 })
 
@@ -168,8 +201,28 @@ quest:AddToggle({  -- Auto-Claim All Quests
 	Default = false,
 	Callback = function(Value)
         AClaimQuest = Value
-        if AClaimQuest == true then warn("[Debug] ✅ Enabled Auto-Claim All Quests") end
+        if AClaimQuest then warn("[Debug] ✅ Enabled Auto-Claim All Quests") end
 	end    
+})
+
+
+-- AUTOKILL
+afmain:AddToggle({  -- Auto-Kill Enemies
+	Name = "⚔️ Auto-Kill Enemies",
+	Default = false,
+	Callback = function(Value)
+        AFkill = Value
+        gm:Set(Value)
+        if AFkill then
+            warn("[Debug] ✅ Enabled Auto-Kill Enemies")
+            OrionLib:MakeNotification({
+                Name = "Auto-Kill",
+                Content = "Enabled Auto-Kill Enemies",
+                Image = "rbxassetid://4483345998",
+                Time = 5
+            })
+        end
+	end
 })
 
 
@@ -185,6 +238,19 @@ misc:AddButton({  -- Redeem All Codes
         warn("[Debug] ✅ Redeemed all codes")
   	end    
 })
+misc:AddButton({  -- Rejoin
+	Name = "🔄 Rejoin",
+	Callback = function()
+        game:GetService("TeleportService"):Teleport(game.PlaceId, slp)
+  	end
+})
+misc:AddButton({  -- Server Hop
+	Name = "⏩ Server Hop",
+	Callback = function()
+        local sh = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
+        sh:Teleport(game.PlaceId)
+  	end
+})
 misc:AddButton({  -- Destroy UI
 	Name = "❌ Destroy UI",
 	Callback = function()
@@ -194,8 +260,11 @@ misc:AddButton({  -- Destroy UI
 
 
 -- LOGIC
+local shrinefix = true
+local enemiesKilled = 0
+
 while task.wait() do  -- Toggles Logic
-    if AUElixir == true then
+    if AUElixir then
         local CoinDur = sui.Buffs.Treasure.Button.Time.Text
         local XPDur = sui.Buffs.Experienced.Button.Time.Text
         local LuckyDur = sui.Buffs["Feeling Lucky"].Button.Time.Text
@@ -229,17 +298,26 @@ while task.wait() do  -- Toggles Logic
         end
         wait(1)
     end
-    if ACShrines == true then
-        for _, shrine in pairs(shrines) do
+    if ACShrines then
+        for _, shrine in pairs(shrinenames) do
             local cdText = game:GetService("Workspace").Shrines[shrine].Action.BillboardGui.Cooldown.Text
-            if cdText == "0s" then
+            if cdText == "0s" or shrinefix then
                 rstorage.Event:FireServer("UseShrine", shrine)
                 warn("[Debug] ✅ Collected " .. shrine .. " shrine")
+                if shrinefix == false then
+                    OrionLib:MakeNotification({
+                        Name = "Shrines",
+                        Content = "Collected " .. shrine .. " shrine",
+                        Image = "rbxassetid://4483345998",
+                        Time = 5
+                    })
+                end
                 wait(1)
             end
         end
+        shrinefix = false
     end
-    if AClaimQuest == true then
+    if AClaimQuest then
         for _, questFolder in pairs(quests) do
             if questFolder.Name == "Template" then
                 local tasks = questFolder.Tasks:GetChildren()
@@ -268,33 +346,69 @@ while task.wait() do  -- Toggles Logic
         end
         wait(5)
     end
-    if ASFish == true then
+    if ASFish then
         rstorage.Event:FireServer("SellFish")
         wait(.1)
     end
-    if ABAuburnShop == true then
+    if ABAuburnShop then
         for i = 1, 3 do
             rstorage.Event:FireServer("BuyShopItem", "auburn-shop", i)
+            wait(.05)
         end
-        wait(.05)
     end
-    if ABMagicShop == true then
+    if ABMagicShop then
         for i = 1, 3 do
             rstorage.Event:FireServer("BuyShopItem", "magic-shop", i)
+            wait(.05)
         end
-        wait(.05)
     end
-    if ABGemTrader == true then
+    if ABGemTrader then
         for i = 1, 3 do
             rstorage.Event:FireServer("BuyShopItem", "gem-trader", i)
+            wait(.05)
         end
-        wait(.05)
     end
-    if ABBlackmarket == true then
+    if ABBlackmarket then
         for i = 1, 3 do
             rstorage.Event:FireServer("BuyShopItem", "the-blackmarket", i)
+            wait(.05)
         end
-        wait(.05)
+    end
+
+    -- AUTOFARM
+    local enemies = game:GetService("Workspace").Rendered.Enemies:GetChildren()
+    if #enemies > 0 then
+        local numEnemies = #enemies
+        enemynum:Set("Number Of Enemies: " .. numEnemies)
+        for _, enemy in ipairs(enemies) do
+            enemynames:Set("Enemy Name: " .. enemy.Name)
+        end
+    else
+        enemynum:Set("No Enemies")
+        enemynames:Set("Enemy Name: None")
+    end
+    if AFkill then
+        local foundEnemy = false
+        for _, enemy in ipairs(enemies) do
+            if enemy:FindFirstChild("Hitbox") then
+                local hitbox = enemy.Hitbox
+                local char = slp.Character
+                local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+                if humanoidRootPart and not foundEnemy then
+                    foundEnemy = true
+                    OrionLib:MakeNotification({
+                        Name = "Auto-Kill",
+                        Content = "Found ".. enemy.Name .." in range, teleporting",
+                        Image = "rbxassetid://4483345998",
+                        Time = 2
+                    })
+                    wait(1)
+                    humanoidRootPart.CFrame = hitbox.CFrame
+                    wait(2.5)
+                    break
+                end        
+            end
+        end
     end
 end
 
