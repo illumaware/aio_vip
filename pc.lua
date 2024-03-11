@@ -10,11 +10,11 @@
     Add teleports to npcs + quests + shops
 ]]--
 
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-local Window = OrionLib:MakeWindow({Name = "[Pet Catchers] AIO", HidePremium = true, SaveConfig = false, ConfigFolder = "Orion"})
+local lib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/lib')))()
+local window = lib:MakeWindow({Name = "[Pet Catchers] AIO", HidePremium = true, SaveConfig = false, ConfigFolder = "Orion"})
 
 
-local home = Window:MakeTab({
+local home = window:MakeTab({
 	Name = "Home",
 	Icon = "rbxassetid://7733960981",
 	PremiumOnly = false
@@ -22,13 +22,13 @@ local home = Window:MakeTab({
 local hmain = home:AddSection({ Name = "Main" })
 hmain:AddParagraph("Welcome to AIO", "v2.2 [debug]")
 local notifyevents = hmain:AddLabel("🎉 No Current Events")
-local newcodelabel = hmain:AddLabel("🏷️ No New Codes Are Available")
+local newcodelabel = hmain:AddLabel("🏷️ No New Codes Available")
 local sessStats = home:AddSection({ Name = "Session Stats" })
-local enemycount = sessStats:AddLabel("⚔️ Enemies Killed This Session: 0 [Total: 0]")
-local eggstats = sessStats:AddLabel("🥚 Eggs Hatched This Session: 0 [Total: 0]")
+local enemycount = sessStats:AddLabel("⚔️ Enemies Killed: 0 [Total: 0]")
+local eggstats = sessStats:AddLabel("🥚 Eggs Hatched: 0 [Total: 0]")
 
 
-local player = Window:MakeTab({
+local player = window:MakeTab({
 	Name = "Player",
 	Icon = "rbxassetid://7743875962",
 	PremiumOnly = false
@@ -38,7 +38,7 @@ local teleports = player:AddSection({ Name = "Teleports" })
 local elixrs = player:AddSection({ Name = "Elixirs" })
 
 
-local auto = Window:MakeTab({
+local auto = window:MakeTab({
 	Name = "Automation",
 	Icon = "rbxassetid://4483345998",
 	PremiumOnly = false
@@ -49,7 +49,7 @@ local fishing = auto:AddSection({ Name = "Fishing" })
 local quest = auto:AddSection({ Name = "Quests" })
 
 
-local autofarm = Window:MakeTab({
+local autofarm = window:MakeTab({
 	Name = "Mob Farming",
 	Icon = "rbxassetid://7733674079",
 	PremiumOnly = false
@@ -60,7 +60,7 @@ local enemynum = Estats:AddLabel("No Enemies")
 local afmain = autofarm:AddSection({ Name = "Main" })
 
 
-local autocrafting = Window:MakeTab({
+local autocrafting = window:MakeTab({
 	Name = "Crafting",
 	Icon = "rbxassetid://7743878358",
 	PremiumOnly = false
@@ -70,7 +70,7 @@ local ACslot2 = autocrafting:AddSection({ Name = "Slot 2" })
 local ACslot3 = autocrafting:AddSection({ Name = "Slot 3" })
 
 
-local autoeggs = Window:MakeTab({
+local autoeggs = window:MakeTab({
 	Name = "Eggs",
 	Icon = "rbxassetid://8997385940",
 	PremiumOnly = false
@@ -78,7 +78,7 @@ local autoeggs = Window:MakeTab({
 local agmain = autoeggs:AddSection({ Name = "Main" })
 
 
-local misc = Window:MakeTab({
+local misc = window:MakeTab({
 	Name = "Misc",
 	Icon = "rbxassetid://7734053495",
 	PremiumOnly = false
@@ -89,7 +89,6 @@ local mother = misc:AddSection({ Name = "Other" })
 
 --[[ VARIABLES ]]--
 local rstorage = game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote
-local codes = {"runes", "lucky", "cherry", "cherries", "gravypet", "update1", "russoplays", "release", "void", "ilovefishing", "brite"}
 local all_events = {"Boss Rush", "Lucky", "Fortune", "Mob Rush", "Quick Fishing", "Treasure", "Shiny Hunt", "Master Chef", "Gamer"}
 local shrinenames = {"egg", "gem", "cube", "berry", "radioactive", "better-cube", "cherry", "ticket", "rune"}
 local vu = game:GetService("VirtualUser")
@@ -104,10 +103,10 @@ local enemiesKilled = 0
 local totalNumberPath = sui.Debug.Stats.Frame.List.EnemiesDefeated.Total
 local previousTotalNumber = textToNumber(totalNumberPath.Text)
 local sessionCount = 0
-
 local eggsHatchedPath = slp.leaderstats["🥚 Hatched"]
 local previouseggsHatchedNumber = eggsHatchedPath.Value
 local eggsSession = 0
+local CodesModule = require(game:GetService("ReplicatedStorage").Shared.Data.Codes)
 
 
 --[[ FUNCTIONS ]]--
@@ -117,7 +116,7 @@ slp.Idled:connect(function()  -- AntiAFK
 end)
 
 local function notify(name, content)  -- Notifications
-    OrionLib:MakeNotification({
+    lib:MakeNotification({
         Name = name,
         Content = content,
         Image = "rbxassetid://7733911828",
@@ -155,7 +154,7 @@ local function updateEnemyCountLabel()  -- Enemy Count Label Updater
     local enemiesKilledThisSession = currentTotalNumber - previousTotalNumber
     sessionCount = sessionCount + enemiesKilledThisSession
     local totalNumber = currentTotalNumber
-    enemycount:Set("⚔️ Enemies Killed This Session: " .. sessionCount .. " [Total: " .. totalNumber .. "]")
+    enemycount:Set("⚔️ Enemies Killed: " .. sessionCount .. " [Total: " .. totalNumber .. "]")
 end
 
 local function updateEggsCountLabel()  -- Eggs Count Label Updater
@@ -163,7 +162,7 @@ local function updateEggsCountLabel()  -- Eggs Count Label Updater
     local eggsHatchedThisSession = currentEggsNumber - previouseggsHatchedNumber
     eggsSession = eggsSession + eggsHatchedThisSession
     local eggsTotalNumber = currentEggsNumber
-    eggstats:Set("🥚 Eggs Hatched This Session: " .. eggsSession .. " [Total: " .. eggsTotalNumber .. "]")
+    eggstats:Set("🥚 Eggs Hatched: " .. eggsSession .. " [Total: " .. eggsTotalNumber .. "]")
 end
 
 local function checkEvents()  -- Check Events Label Updater
@@ -182,6 +181,14 @@ local function checkEvents()  -- Check Events Label Updater
     if not event_found then
         notifyevents:Set("🎉 No Current Events")
     end
+end
+
+local function redeemAllCodes()  -- Redeem All Codes
+    for code, _ in pairs(CodesModule) do
+        rstorage.Function:InvokeServer("RedeemCode", code)
+        wait(1)
+    end
+    notify("Codes", "Redeemed All Codes")
 end
 
 
@@ -216,18 +223,12 @@ teleports:AddDropdown({  -- Regions Teleport
         notify("Teleport", "Teleported to " .. Value)
 	end
 })
-teleports:AddDropdown({  -- Regions Teleport
+teleports:AddDropdown({  -- Shops Teleport
 	Name = "🏪 Shops",
 	Default = "",
-	Options = {"The Blackmarket", "The Summit", "Magma Basin", "Gloomy Grotto", "Dusty Dunes", "Sunset Shores", "Frosty Peaks", "Auburn Woods", "Mellow Meadows", "Pet Park"},
+	Options = {"Work in progress"},
 	Callback = function(Value)
-        if Value ~= "The Blackmarket" and Value ~= "The Summit" then
-		    rstorage.Event:FireServer("TeleportBeacon", Value, "Spawn")
-        else
-            rstorage.Event:FireServer("TeleportBeacon", "Magma Basin", Value)
-        end
-        warn("[Debug] ✅ Teleported to " .. Value)
-        notify("Teleport", "Teleported to " .. Value)
+        print("wip")
 	end
 })
 
@@ -293,6 +294,14 @@ autoshrines:AddToggle({  -- Auto Collect Shrines
 	end
 })
 
+fishing:AddToggle({  -- Auto Fish
+	Name = "🐟 Auto Fish",
+	Default = false,
+	Callback = function(Value)
+        AFish = Value
+        if AFish then warn("[Debug] ✅ Enabled Auto Fish") end
+	end
+})
 fishing:AddToggle({  -- Auto Sell Fish
 	Name = "🐟 Auto Sell Fish",
 	Default = false,
@@ -449,13 +458,7 @@ mgui:AddToggle({  -- Disable Snow
 })
 mother:AddButton({  -- Redeem All Codes
 	Name = "🏷️ Redeem All Codes",
-	Callback = function()
-        for _, code in pairs(codes) do
-            rstorage.Function:InvokeServer("RedeemCode", code)
-            wait(.5)
-        end
-        notify("Codes", "Redeemed All Codes")
-  	end    
+	Callback = redeemAllCodes
 })
 mother:AddButton({  -- Rejoin
 	Name = "🔄 Rejoin",
@@ -477,7 +480,7 @@ mother:AddButton({  -- Server Hop
 mother:AddButton({  -- Destroy UI
 	Name = "❌ Destroy UI",
 	Callback = function()
-        OrionLib:Destroy()
+        lib:Destroy()
   	end    
 })
 
@@ -558,6 +561,10 @@ while task.wait() do
             end
         end
         wait(5)
+    end
+    if AFish then
+        rstorage.Event:FireServer("StartCastFishing")
+        wait(.001)
     end
     if ASFish then
         rstorage.Event:FireServer("SellFish")
@@ -670,4 +677,4 @@ while task.wait() do
     checkEvents()
 end
 
-OrionLib:Init()
+lib:Init()
