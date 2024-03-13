@@ -389,6 +389,14 @@ afmobs:AddToggle({  -- Auto Kill Mobs
 	end
 })
 
+afkraken:AddTextbox({  -- Kraken LVL
+	Name = "🐙 Kraken Level (0 = Max)",
+	Default = "",
+	TextDisappear = false,
+	Callback = function(Value)
+		chosenkrakenlvl = tonumber(Value)
+	end
+})
 afkraken:AddToggle({  -- Auto Kill Kraken
 	Name = "🐙 Auto Kill Kraken",
 	Default = false,
@@ -411,6 +419,14 @@ afkraken:AddToggle({  -- Auto Use Tome For Kraken
 	end
 })
 
+afkingslime:AddTextbox({  -- King Slime LVL
+	Name = "🦠 King Slime Level (0 = Max)",
+	Default = "",
+	TextDisappear = false,
+	Callback = function(Value)
+		chosenslimelvl = tonumber(Value)
+	end
+})
 afkingslime:AddToggle({  -- Auto Kill King Slime
 	Name = "🦠 Auto Kill King Slime",
 	Default = false,
@@ -668,7 +684,13 @@ while task.wait() do
         local currentPos = player.Character and player.Character.HumanoidRootPart.Position
         if not krakencooldown.Visible then
             local krakenlvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["the-kraken"].Total.Text
-            local krakenLVL = tonumber(krakenlvlTextPath:match("%d+"))
+            local krakenLVL
+            if chosenkrakenlvl == 0 then
+                krakenLVL = tonumber(krakenlvlTextPath:match("%d+"))
+            else
+                krakenLVL = chosenkrakenlvl
+            end
+            print("[Debug] Chosen Kraken LVL: " ..chosenkrakenlvl)
             wait(1)
             rstorage.Function:InvokeServer("BossRequest", "the-kraken", krakenLVL)
             warn("[Debug] ✅🐙 Spawned Kraken [LVL: " .. krakenLVL .. "]")
@@ -699,7 +721,13 @@ while task.wait() do
         local currentPos = player.Character and player.Character.HumanoidRootPart.Position
         if not slimecooldown.Visible then
             local slimelvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["king-slime"].Total.Text
-            local slimeLVL = tonumber(slimelvlTextPath:match("%d+"))
+            local slimeLVL
+            if chosenslimelvl == 0 then
+                slimeLVL = tonumber(slimelvlTextPath:match("%d+"))
+            else
+                slimeLVL = chosenslimelvl
+            end
+            print("[Debug] Chosen King Slime LVL: " ..chosenslimelvl)
             wait(1)
             rstorage.Function:InvokeServer("BossRequest", "king-slime", slimeLVL)
             warn("[Debug] ✅🦠 Spawned King Slime [LVL: " .. slimeLVL .. "]")
