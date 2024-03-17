@@ -1,0 +1,6 @@
+local gui = loadstring(game:HttpGet("https://gitlab.com/0x45.xyz/droplib/-/raw/master/drop-minified.lua"))():Init()
+local main = gui:CreateCategory("Debug")
+main:CreateButton("Hyrdoxide",function() loadstring(game:HttpGet("https://stellsor.xyz/scripts/hydroxide.lua", true))() end)
+main:CreateButton("BetterDex",function() loadstring(game:HttpGet("https://stellsor.xyz/scripts/explorer.lua", true))() end)
+main:CreateButton("🔄 Rejoin",function() game:GetService("TeleportService"):Teleport(game.PlaceId,game.Players.LocalPlayer) end)
+main:CreateButton("❌ Destroy UI",function() gui:CleanUp() end)
