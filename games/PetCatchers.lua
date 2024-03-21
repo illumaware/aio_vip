@@ -457,6 +457,7 @@ afmobs2:AddSlider({  -- OP Auto Kill Delay
         opDelay = tonumber(Value)
 	end
 })
+
 afmobs2:AddToggle({  -- OP Auto Kill Mobs
 	Name = "💸 OP Auto Kill Mobs",
 	Default = false,
@@ -475,6 +476,20 @@ afmobs2:AddToggle({
         AFkill2debug = Value
 	end
 })
+local function autoKillMobs2()
+    while true do
+        if AFkill2 then
+            for _, locationFolder in pairs(workspace.Markers.Enemies:GetChildren()) do
+                if locationFolder:IsA("Folder") then
+                    gBetaFinder(locationFolder:FindFirstChild("Default"))
+                    gBetaFinder(locationFolder:FindFirstChild("Armored"))
+                end
+            end
+        end
+        wait()
+    end
+end
+task.spawn(autoKillMobs2)
 
 afkraken:AddTextbox({  -- Kraken LVL
 	Name = "🐙 Kraken Level (0 = Max)",
@@ -890,15 +905,6 @@ while task.wait() do
                         end
                     end
                 end
-            end
-        end
-    end
-
-    if AFkill2 then
-        for _, locationFolder in pairs(workspace.Markers.Enemies:GetChildren()) do
-            if locationFolder:IsA("Folder") then
-                gBetaFinder(locationFolder:FindFirstChild("Default"))
-                gBetaFinder(locationFolder:FindFirstChild("Armored"))
             end
         end
     end
