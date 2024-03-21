@@ -4,10 +4,7 @@
     Auto Catch pets
     Auto Orbs
 
-    Fix Auto Fish
-
-    Add walk and teleport farm type to auto kill
-    Add teleports to npcs + quests + shops
+    Add teleports to npcs + quests
 ]]--
 
 repeat task.wait()until game:IsLoaded()
@@ -41,6 +38,7 @@ local quest = auto:AddSection({ Name = "Quests" })
 --[[ Farming ]]--
 local autofarm = window:MakeTab({ Name = "Farming", Icon = "rbxassetid://7733674079" })
 local afmobs = autofarm:AddSection({ Name = "Mobs" })
+local afmobs2 = autofarm:AddSection({ Name = "[BETA] OP Mobs" })
 local enemynames = afmobs:AddLabel("Enemy Name: None")
 local enemynum = afmobs:AddLabel("No Enemies")
 local afkraken = autofarm:AddSection({ Name = "Kraken" })
@@ -140,8 +138,9 @@ local function updateEnemyCount()
     end
 end
 
+local enemies
 local function updateEnemies()
-    local enemies = ws.Rendered.Enemies:GetChildren()
+    enemies = ws.Rendered.Enemies:GetChildren()
     if #enemies > 0 then
         local numEnemies = #enemies
         local uniqueEnemyNames = {}
@@ -185,27 +184,27 @@ local function updateEggsCount()
     end
 end
 
+local s_e_p = sui.HUD.Top.Event.Title
+local s_e_t_p = sui.HUD.Top.Event.Timer
 local function checkEvents()  -- Events Label Updater
-    local server_event_path = sui.HUD.Top.Event.Title.Text
-    local server_event_timer_path = sui.HUD.Top.Event.Timer.Text
-    local event_found = false
+    local server_event = sui.HUD.Top.Event
 
     for _, event in pairs(all_events) do
-        if string.find(server_event_path, event) and server_event_timer_path ~= "Ends in 0 seconds" then
-            notifyevents:Set("🎉 Current Event: " .. event .. " [" .. server_event_timer_path .. "]")
-            event_found = true
-            break
+        local server_event_path = s_e_p.Text
+        if server_event.Visible then
+            if string.find(server_event_path, event) then
+                local server_event_timer_path = s_e_t_p.Text
+                notifyevents:Set("🎉 Current Event: " .. event .. " [" .. server_event_timer_path .. "]")
+            end
+        else
+            notifyevents:Set("🎉 No current Events")
         end
-    end
-
-    if not event_found then
-        notifyevents:Set("🎉 No current Events")
     end
 end
 checkEvents()
 
+local krakencooldown = ws.Bosses["the-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
 local function checkKrakenBoss()  -- Kraken Boss Updater
-    local krakencooldown = ws.Bosses["the-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
     if krakencooldown and krakencooldown.Visible then
         local krakenbosstimer = krakencooldown.Title.Text
         krakentimer:Set("🐙 Kraken: " .. krakenbosstimer)
@@ -215,8 +214,8 @@ local function checkKrakenBoss()  -- Kraken Boss Updater
 end
 checkKrakenBoss()
 
+local slimecooldown = ws.Bosses["king-slime"].Display.SurfaceGui.BossDisplay.Cooldown
 local function checkSlimeBoss()  -- Slime Boss Updater
-    local slimecooldown = ws.Bosses["king-slime"].Display.SurfaceGui.BossDisplay.Cooldown
     if slimecooldown and slimecooldown.Visible then
         local slimebosstimer = slimecooldown.Title.Text
         slimetimer:Set("🦠 King Slime: " .. slimebosstimer)
@@ -237,6 +236,21 @@ end
 local function autoBuyShopItems(shopName)  -- Auto Buy Shops
     for i = 1, 3 do
         rstorage.Event:FireServer("BuyShopItem", shopName, i)
+    end
+end
+
+local function gBetaFinder(folder)
+    if folder then
+        for _, idFolder in pairs(folder:GetChildren()) do
+            if idFolder:IsA("Folder") and AFkill2 then
+                rstorage.Event:FireServer("TargetEnemy", idFolder.Name)
+                if AFkill2debug then
+                    notify("Encoded TargetID [Delay: " .. opDelay .. "s]", idFolder.Name)
+                    print("Encoded TargetID: "..idFolder.Name.." [Delay: " .. opDelay .. "s]")
+                end
+                wait(opDelay)
+            end
+        end
     end
 end
 
@@ -407,16 +421,58 @@ quest:AddToggle({  -- Auto Claim All Quests
 
 
 --[[ FARMING TAB ]]--
+afmobs:AddDropdown({  -- Auto Kill Type
+    Name = "⚔️ Choose Type",
+    Default = "",
+    Options = {"Walk", "Teleport"},
+    Callback = function(Value)
+        chosenAFtype = Value
+    end
+})
 afmobs:AddToggle({  -- Auto Kill Mobs
 	Name = "⚔️ Auto Kill Mobs",
 	Default = false,
 	Callback = function(Value)
         AFkill = Value
-        if AFkill then
+        if AFkill and chosenAFtype ~= nil then
             gm:Set(true)
-            warn("[Debug] ✅ Enabled Auto Kill Mobs")
-            notify("Auto Kill", "Enabled Auto Kill Mobs")
+            rstorage.Event:FireServer("UnequipMount")
+            warn("[Debug] ✅ Enabled Auto Kill Mobs [Type: "..chosenAFtype.."]")
+            notify("Auto Kill", "Enabled Auto Kill Mobs [Type: "..chosenAFtype.."]")
+        elseif AFkill and chosenAFtype == nil then
+            notify("Auto Kill", "⚠️ Enable Auto Kill Type")
         end
+	end
+})
+
+afmobs2:AddSlider({  -- OP Auto Kill Delay
+	Name = "OP Auto Kill Delay (Better Pets = Lower Value)",
+	Min = 0.25,
+	Max = 5,
+	Default = 0.25,
+	Color = Color3.fromRGB(55,55,55),
+	Increment = 0.25,
+	ValueName = "s",
+	Callback = function(Value)
+        opDelay = tonumber(Value)
+	end
+})
+afmobs2:AddToggle({  -- OP Auto Kill Mobs
+	Name = "💸 OP Auto Kill Mobs",
+	Default = false,
+	Callback = function(Value)
+        AFkill2 = Value
+        if AFkill2 then
+            warn("[Debug] ✅ Enabled OP Auto Kill Mobs [Delay: "..opDelay.."]")
+            notify("Auto Kill", "Enabled OP Auto Kill Mobs [Delay: "..opDelay.."]")
+        end
+	end
+})
+afmobs2:AddToggle({
+	Name = "Debug",
+	Default = false,
+	Callback = function(Value)
+        AFkill2debug = Value
 	end
 })
 
@@ -798,22 +854,51 @@ while task.wait() do
     updateEnemies()
     updateEggsCount()
     updateEnemyCount()
+    checkEvents()
 
     if AFkill then
         local foundEnemy = false
-        for _, enemy in ipairs(enemies) do
-            if enemy:FindFirstChild("Hitbox") then
-                local hitbox = enemy.Hitbox
-                local char = slp.Character
-                local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
-                if humanoidRootPart and not foundEnemy then
-                    foundEnemy = true
-                    notify("Auto Kill", "Found ".. enemy.Name .." in range, teleporting")
-                    wait(1)
-                    humanoidRootPart.CFrame = hitbox.CFrame
-                    wait(2.5)
-                    break
+        if #enemies > 0 then    
+            for _, enemy in ipairs(enemies) do
+                if enemy:FindFirstChild("Hitbox") then
+                    local hitbox = enemy.Hitbox
+                    local char = slp.Character
+                    local pfs = game:GetService("PathfindingService")
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+                    if humanoidRootPart and not foundEnemy then
+                        foundEnemy = true
+                        if chosenAFtype == "Walk" then
+                            local path = pfs:FindPathAsync(humanoidRootPart.Position, hitbox.Position)
+                            local waypoint = path:GetWaypoints()
+                            local oldpoints = waypoint
+                            
+                            if waypoint and waypoint[3] then
+                                humanoid:MoveTo(waypoint[3].Position)
+                                humanoid.Jump = false
+                            else
+                                for i = 3, #oldpoints do
+                                    humanoid:MoveTo(oldpoints[i].Position)	
+                                end
+                            end
+
+                        elseif chosenAFtype == "Teleport" then
+                            wait(1)
+                            humanoidRootPart.CFrame = hitbox.CFrame
+                            wait(2.5)
+                            break
+                        end
+                    end
                 end
+            end
+        end
+    end
+
+    if AFkill2 then
+        for _, locationFolder in pairs(workspace.Markers.Enemies:GetChildren()) do
+            if locationFolder:IsA("Folder") then
+                gBetaFinder(locationFolder:FindFirstChild("Default"))
+                gBetaFinder(locationFolder:FindFirstChild("Armored"))
             end
         end
     end
@@ -838,8 +923,6 @@ while task.wait() do
         rstorage.Function:InvokeServer("TryHatchEgg", chosenEgg)
         wait(.01)
     end
-
-    checkEvents()
 end
 
 lib:Init()
