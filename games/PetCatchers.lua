@@ -1,23 +1,15 @@
---[[
-    TODO:
-    Auto Minigames
-    Auto Catch pets
-    Auto Orbs
-
-    Add teleports to npcs + quests
-]]--
-
-repeat task.wait()until game:IsLoaded()
+repeat task.wait() until game:IsLoaded()
 local lib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/debug/BetterOrion.lua')))()
-local window = lib:MakeWindow({Name = "[Pet Catchers] AIO", HidePremium = true, SaveConfig = false, ConfigFolder = "AIO_PetCatchers"})
+local window = lib:MakeWindow({Name = "[Pet Catchers] AIO", HidePremium = true, SaveConfig = true, ConfigFolder = "AIO_PetCatchers", IntroEnabled = false})
 
+print("[AIO/Misc] Minigame PetID: "..getfenv().minigamePetID)
 
 --[[ Home ]]--
 local home = window:MakeTab({ Name = "Home", Icon = "rbxassetid://7733960981" })
 local hmain = home:AddSection({ Name = "Main" })
-local welcome = hmain:AddParagraph("Welcome to AIO", "v2.3 [stable]")
+local welcome = hmain:AddParagraph("Welcome to AIO", "v2.4 [beta]")
 local notifyevents = hmain:AddLabel("🎉 No current Events")
-local newcodelabel = hmain:AddLabel("🏷️ No new codes Available")
+local newcodelabel = hmain:AddLabel("🏷️ Redeemed New Code: None")
 local sessStats = home:AddSection({ Name = "Session Stats" })
 local enemycount = sessStats:AddLabel("⚔️ Enemies Killed: 0 [Total: 0]")
 local eggstats = sessStats:AddLabel("🥚 Eggs Hatched: 0 [Total: 0]")
@@ -31,20 +23,24 @@ local powerups = player:AddSection({ Name = "Powerups" })
 --[[ Automation ]]--
 local auto = window:MakeTab({ Name = "Automation", Icon = "rbxassetid://7733942651" })
 local autobuy = auto:AddSection({ Name = "Shops" })
-local autoshrines = auto:AddSection({ Name = "Shrines" })
-local fishing = auto:AddSection({ Name = "Fishing" })
-local quest = auto:AddSection({ Name = "Quests" })
+local autoexchange = auto:AddSection({ Name = "Exchange" })
 
 --[[ Farming ]]--
-local autofarm = window:MakeTab({ Name = "Farming", Icon = "rbxassetid://7733674079" })
+local autofarm = window:MakeTab({ Name = "Farming", Icon = "rbxassetid://7743872758" })
 local afmobs = autofarm:AddSection({ Name = "Mobs" })
-local afmobs2 = autofarm:AddSection({ Name = "[BETA] OP Mobs" })
 local enemynames = afmobs:AddLabel("Enemy Name: None")
-local enemynum = afmobs:AddLabel("No Enemies")
+local enemynum = afmobs:AddLabel("Number of Enemies: None")
+local afhypercore = autofarm:AddSection({ Name = "Hyper Core" })
+local hypertimer = afhypercore:AddLabel("❤️ Hyper Core is not available")
 local afkraken = autofarm:AddSection({ Name = "Kraken" })
 local krakentimer = afkraken:AddLabel("🐙 Kraken is not available")
 local afkingslime = autofarm:AddSection({ Name = "King Slime" })
 local slimetimer = afkingslime:AddLabel("🦠 King Slime is not available")
+
+--[[ Minigames ]]--
+local minigames = window:MakeTab({ Name = "Minigames", Icon = "rbxassetid://7733799901" })
+local ticketsMg = minigames:AddSection({ Name = "Main" })
+local fishing = minigames:AddSection({ Name = "Fishing" })
 
 --[[ Crafting ]]--
 local autocrafting = window:MakeTab({ Name = "Crafting", Icon = "rbxassetid://7743878358" })
@@ -58,34 +54,30 @@ local agmain = autoeggs:AddSection({ Name = "Main" })
 
 --[[ Misc ]]--
 local misc = window:MakeTab({ Name = "Misc", Icon = "rbxassetid://7734053495" })
+local cfg = misc:AddSection({ Name = "Config" })
 local mgui = misc:AddSection({ Name = "Render" })
-local mother = misc:AddSection({ Name = "Other" })
+local mOther = misc:AddSection({ Name = "Other" })
 
 
 
 --[[ VARIABLES ]]--
 local rstorage = game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote
-local all_events = {"Boss Rush", "Lucky", "Fortune", "Mob Rush", "Quick Fishing", "Treasure", "Shiny Hunt", "Master Chef", "Gamer"}
-local shrinesModule = require(game:GetService("ReplicatedStorage").Shared.Data.Shrines)
 local vu = game:GetService("VirtualUser")
-local slp = game:GetService("Players").LocalPlayer
 local ws = game:GetService("Workspace")
+local pfs = game:GetService("PathfindingService")
+local slp = game:GetService("Players").LocalPlayer
 local sui = slp.PlayerGui.ScreenGui
-local aio = sui.v if aio then aio.Text = "aio.vip" end
 local lp = slp.Character.Humanoid
 local quests = sui.Quests.List:GetChildren()
-local sGuiHolder = slp.PlayerGui.ScreenGuiHolder
-local function textToNumber(text) return tonumber(text:gsub(",", ""):match("%d+")) end
-local totalNumberPath = sui.Debug.Stats.Frame.List.EnemiesDefeated.Total
-local previousTotalNumber = textToNumber(totalNumberPath.Text)
-local sessionCount, eggsSession = 0, 0
-local eggsHatchedPath = slp.leaderstats["🥚 Hatched"]
-local previouseggsHatchedNumber = eggsHatchedPath.Value
-local codesModule = require(game:GetService("ReplicatedStorage").Shared.Data.Codes)
+local hyperAFcooldown = ws.Bosses["hyper-core"].Display.SurfaceGui.BossDisplay.Cooldown
+local slimeAFcooldown = ws.Bosses["king-slime"].Display.SurfaceGui.BossDisplay.Cooldown
+local krakenAFcooldown = ws.Bosses["the-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
+
+
 
 --[[ FUNCTIONS ]]--
 slp.Idled:connect(function() vu:CaptureController() vu:ClickButton2(Vector2.new()) end)  -- AntiAFK
-
+local function textToNumber(text) return tonumber(text:gsub(",", ""):match("%d+")) end
 local function notify(name, content)  -- Notifications
     lib:MakeNotification({
         Name = name,
@@ -95,168 +87,250 @@ local function notify(name, content)  -- Notifications
     })
 end
 
-local function redeemNewCode()  -- Redeem New Codes
-    local foundCgui = nil
-
+local function redeemNewCode()
+    local sGuiHolder = slp.PlayerGui.ScreenGuiHolder
     for _, surfaceGui in pairs(sGuiHolder:GetChildren()) do
         if surfaceGui:IsA("SurfaceGui") then
             local frame = surfaceGui:FindFirstChild("Frame")
             if frame then
                 local code = frame:FindFirstChild("Code")
                 if code and code:IsA("TextLabel") then
-                    foundCgui = surfaceGui
-                    break
+                    local newcode = code.Text
+                    local cleanednewcode = newcode:sub(2, -2)
+                    rstorage.Function:InvokeServer("RedeemCode", cleanednewcode)
+                    newcodelabel:Set("🏷️ Redeemed New Code: " .. cleanednewcode)
+                    return
                 end
             end
         end
     end
-
-    if foundCgui then
-        local newcode = foundCgui.Frame.Code.Text
-        local cleanednewcode = newcode:sub(2, -2)
-        rstorage.Function:InvokeServer("RedeemCode", cleanednewcode)
-        newcodelabel:Set("🏷️ Redeemed New Code: " ..cleanednewcode)
-        notify("New Code", "Redeemed: " .. cleanednewcode)
-    end
-end
-redeemNewCode()
-
-local function updateEnemyCountLabel()  -- Enemy Count Label Updater
-    local currentTotalNumber = textToNumber(totalNumberPath.Text)
-    local enemiesKilledThisSession = currentTotalNumber - previousTotalNumber
-    sessionCount = sessionCount + enemiesKilledThisSession
-    local totalNumber = currentTotalNumber
-    enemycount:Set("⚔️ Enemies Killed: " .. sessionCount .. " [Total: " .. totalNumber .. "]")
-end
-updateEnemyCountLabel()
-
-local function updateEnemyCount()
-    local currentTotalNumber = textToNumber(totalNumberPath.Text)
-    if currentTotalNumber ~= previousTotalNumber then
-        updateEnemyCountLabel()
-        previousTotalNumber = currentTotalNumber
-    end
-end
-
-local enemies
-local function updateEnemies()
-    enemies = ws.Rendered.Enemies:GetChildren()
-    if #enemies > 0 then
-        local numEnemies = #enemies
-        local uniqueEnemyNames = {}
-        for _, enemy in ipairs(enemies) do
-            if enemy.Name ~= "Snowball" then
-                uniqueEnemyNames[enemy.Name] = true
-            end
-        end
-
-        local enemyNameString = "None"
-        for enemyName, _ in pairs(uniqueEnemyNames) do
-            if enemyNameString == "None" then
-                enemyNameString = enemyName
-            else
-                enemyNameString = enemyNameString .. ", " .. enemyName
-            end
-        end
-
-        enemynum:Set("Number of Enemies: " .. numEnemies)
-        enemynames:Set("Enemy Name: " .. enemyNameString)
-    else
-        enemynum:Set("No Enemies")
-        enemynames:Set("Enemy Name: None")
-    end
-end
-
-local function updateEggsCountLabel()  -- Eggs Count Label Updater
-    local currentEggsNumber = eggsHatchedPath.Value
-    local eggsHatchedThisSession = currentEggsNumber - previouseggsHatchedNumber
-    eggsSession = eggsSession + eggsHatchedThisSession
-    local eggsTotalNumber = currentEggsNumber
-    eggstats:Set("🥚 Eggs Hatched: " .. eggsSession .. " [Total: " .. eggsTotalNumber .. "]")
-end
-updateEggsCountLabel()
-
-local function updateEggsCount()
-    local currentEggsNumber = eggsHatchedPath.Value
-    if currentEggsNumber ~= previouseggsHatchedNumber then
-        updateEggsCountLabel()
-        previouseggsHatchedNumber = currentEggsNumber
-    end
-end
-
-local s_e_p = sui.HUD.Top.Event.Title
-local s_e_t_p = sui.HUD.Top.Event.Timer
-local function checkEvents()  -- Events Label Updater
-    local server_event = sui.HUD.Top.Event
-
-    for _, event in pairs(all_events) do
-        local server_event_path = s_e_p.Text
-        if server_event.Visible then
-            if string.find(server_event_path, event) then
-                local server_event_timer_path = s_e_t_p.Text
-                notifyevents:Set("🎉 Current Event: " .. event .. " [" .. server_event_timer_path .. "]")
-            end
-        else
-            notifyevents:Set("🎉 No current Events")
-        end
-    end
-end
-checkEvents()
-
-local krakencooldown = ws.Bosses["the-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
-local function checkKrakenBoss()  -- Kraken Boss Updater
-    if krakencooldown and krakencooldown.Visible then
-        local krakenbosstimer = krakencooldown.Title.Text
-        krakentimer:Set("🐙 Kraken: " .. krakenbosstimer)
-    else
-        krakentimer:Set("🐙 Kraken: ✅ Ready")
-    end
-end
-checkKrakenBoss()
-
-local slimecooldown = ws.Bosses["king-slime"].Display.SurfaceGui.BossDisplay.Cooldown
-local function checkSlimeBoss()  -- Slime Boss Updater
-    if slimecooldown and slimecooldown.Visible then
-        local slimebosstimer = slimecooldown.Title.Text
-        slimetimer:Set("🦠 King Slime: " .. slimebosstimer)
-    else
-        slimetimer:Set("🦠 King Slime: ✅ Ready")
-    end
-end
-checkSlimeBoss()
-
-local function redeemAllCodes()  -- Redeem All Codes
-    for code, _ in pairs(codesModule) do
-        rstorage.Function:InvokeServer("RedeemCode", code)
-        wait(0.5)
-    end
-    notify("Codes", "Redeemed All Codes")
-end
-
-local function autoBuyShopItems(shopName)  -- Auto Buy Shops
+end redeemNewCode()
+local function autoBuyShopItems(shopName)
     for i = 1, 3 do
-        rstorage.Event:FireServer("BuyShopItem", shopName, i)
+        rstorage.Event:FireServer("BuyShopItem", shopName, i, 1)
     end
 end
-
-local function gBetaFinder(folder)
+local function teleportToRegion(region)
+    if region ~= "The Blackmarket" and region ~= "The Summit" then
+        rstorage.Event:FireServer("TeleportBeacon", region, "Spawn")
+    else
+        rstorage.Event:FireServer("TeleportBeacon", "Magma Basin", region)
+    end
+    notify("Teleport", "Teleported to " .. region)
+end
+local function teleportToActivation(Activation)
+    local activationsPositions = {
+        ["💰 Auburn Shop"] = ws.Activations["auburn-shop"].Root.Position,
+        ["💰 Magic Shop"] = ws.Activations["magic-shop"].Root.Position,
+        ["💎 Gem Trader"] = ws.Activations["gem-trader"].Root.Position,
+        ["💎 Blackmarket"] = ws.Activations["the-blackmarket"].Root.Position,
+        ["💎 Talents"] = ws.Activations.talents.Root.Position,
+        ["👾 Prize Counter"] = ws.Activations["prize-counter"].Root.Position
+    }
+    local position = activationsPositions[Activation]
+    if position then
+        slp.Character:MoveTo(position)
+        notify("Teleport", "Teleported to " .. Activation)
+    end
+end
+local function teleportToBoss(boss)
+    local bossesPos = {
+        ["❤️ Hyper Core"] = ws.Bosses["hyper-core"].Gate.Activation.Root.Position,
+        ["🐙 Kraken"]     = ws.Bosses["the-kraken"].Gate.Activation.Root.Position,
+        ["🦠 King Slime"] = ws.Bosses["king-slime"].Gate.Activation.Root.Position
+    }
+    local bossPos = bossesPos[boss]
+    if bossPos then
+        slp.Character:MoveTo(bossPos)
+        notify("Teleport", "Teleported to " .. boss .. " boss")
+    end
+end
+local function usePowerups(powerupName, durationObj, notificationMsg)
+    if not durationObj.Visible then
+        rstorage.Event:FireServer("UsePowerup", powerupName)
+        notify("Powerups", notificationMsg)
+        wait(1)
+    end
+end
+local function useFarmPowerups()
+    local coinDur = sui.Buffs.Treasure
+    local xpDur = sui.Buffs.Experienced
+    if not coinDur.Visible and not xpDur.Visible then
+        rstorage.Event:FireServer("UsePowerup", "Coin Elixir")
+        rstorage.Event:FireServer("UsePowerup", "XP Elixir")
+        notify("Powerups", "Used Coin and XP Elixirs")
+        wait(1)
+    end
+end
+local function useArcadePowerups()
+    local gamerDur = sui.Buffs.Gamer
+    local tokenDur = sui.Buffs.Token
+    if not gamerDur.Visible and not tokenDur.Visible then
+        rstorage.Event:FireServer("UsePowerup", "Gamer Elixir")
+        rstorage.Event:FireServer("UsePowerup", "Token Elixir")
+        notify("Powerups", "Used Gamer and Token Elixirs")
+        wait(1)
+    end
+end
+local function startFishing()
+    local humanoidRootPart = slp.Character:FindFirstChild("HumanoidRootPart")
+    local fishingRod = ws:FindFirstChild(slp.Name):FindFirstChild("FishingRod")
+    if humanoidRootPart and humanoidRootPart.Anchored then humanoidRootPart.Anchored = false end
+    if fishingRod then fishingRod:Destroy() end
+    rstorage.Event:FireServer("StartCastFishing")
+    wait(fishingDelay)
+end
+local function findEnemy(folder)
     if folder then
-        for _, idFolder in pairs(folder:GetChildren()) do
-            if idFolder:IsA("Folder") and AFkill2 then
+        for _, idFolder in ipairs(folder:GetChildren()) do
+            if idFolder:IsA("Folder") and AFkill then
                 rstorage.Event:FireServer("TargetEnemy", idFolder.Name)
-                if AFkill2debug then
-                    notify("Encoded TargetID [Delay: " .. opDelay .. "s]", idFolder.Name)
-                    print("Encoded TargetID: "..idFolder.Name.." [Delay: " .. opDelay .. "s]")
-                end
                 wait(opDelay)
             end
         end
     end
 end
+local function autoKillMobs()
+    if not AFkill then return end
+    if chosenAFtype == "Global" then
+        for _, locationFolder in ipairs(ws.Markers.Enemies:GetChildren()) do
+            if locationFolder:IsA("Folder") then
+                findEnemy(locationFolder:FindFirstChild("Default"))
+                findEnemy(locationFolder:FindFirstChild("Armored"))
+            end
+        end
+    end
+    local char = slp.Character
+    if not char then return end
+    local humanoid = char:FindFirstChildOfClass("Humanoid")
+    local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
+    if not humanoidRootPart or not humanoid then return end
+    local foundEnemy = false
+    for _, enemy in ipairs(enemies) do
+        if enemy:FindFirstChild("Hitbox") and not foundEnemy then
+            foundEnemy = true
+            local hitbox = enemy.Hitbox
+            if chosenAFtype == "Walk" then
+                local path = pfs:FindPathAsync(humanoidRootPart.Position, hitbox.Position)
+                local waypoint = path:GetWaypoints()
+                if waypoint and #waypoint >= 3 then
+                    humanoid:MoveTo(waypoint[3].Position)
+                    humanoid.Jump = false
+                end
+            elseif chosenAFtype == "Teleport" then
+                humanoidRootPart.CFrame = hitbox.CFrame
+                wait(2.5)
+                break
+            end
+        end
+    end
+end
+
+local function updLabels()  -- Labels Updater
+    local enemies_session, eggs_session = 0, 0
+    local enemies_num_path = sui.Debug.Stats.Frame.List.EnemiesDefeated.Total
+    local enemies_start_total = textToNumber(enemies_num_path.Text)
+    local eggs_num_path = slp.leaderstats["🥚 Hatched"]
+    local eggs_start_total = eggs_num_path.Value
+    local sePath = sui.HUD.Top.Event.Title
+    local seTimer = sui.HUD.Top.Event.Timer
+    local eventsModule = require(game:GetService("ReplicatedStorage").Shared.Data.Events)
+    while task.wait() do
+        --[[Home]]--
+        local enemies_total = textToNumber(enemies_num_path.Text)
+        local eggs_total = eggs_num_path.Value
+        if enemies_total and eggs_total then
+            local enemies_killed = enemies_total - enemies_start_total
+            local eggs_hatched = eggs_total - eggs_start_total
+            enemies_session = enemies_session + enemies_killed
+            eggs_session = eggs_session + eggs_hatched
+            enemycount:Set("⚔️ Enemies Killed: " .. enemies_session .. " [Total: " .. enemies_total .. "]")
+            eggstats:Set("🥚 Eggs Hatched: " .. eggs_session .. " [Total: " .. eggs_total .. "]")
+            enemies_start_total = enemies_total
+            eggs_start_total = eggs_total
+        end
+
+        local server_event = sui.HUD.Top.Event
+        for event, _ in pairs(eventsModule) do
+            local server_event_path = sePath.Text
+            if server_event.Visible then
+                if string.find(server_event_path, event) then
+                    local server_event_timer_path = seTimer.Text
+                    notifyevents:Set("🎉 Current Event: " .. event .. " [" .. server_event_timer_path .. "]")
+                end
+            else
+                notifyevents:Set("🎉 No current Events")
+            end
+        end
+
+        --[[Farming]]--
+        enemies = ws.Rendered.Enemies:GetChildren()
+        if #enemies > 0 then
+            local numEnemies = #enemies
+            local uniqueEnemyNames = {}
+            for _, enemy in ipairs(enemies) do
+                if enemy.Name ~= "Snowball" then
+                    uniqueEnemyNames[enemy.Name] = true
+                end
+            end
+            local enemyNameString = "None"
+            for enemyName, _ in pairs(uniqueEnemyNames) do
+                if enemyNameString == "None" then
+                    enemyNameString = enemyName
+                else
+                    enemyNameString = enemyNameString .. ", " .. enemyName
+                end
+            end
+            enemynum:Set("Number of Enemies: " .. numEnemies)
+            enemynames:Set("Enemy Name: " .. enemyNameString)
+        else
+            enemynum:Set("Number of Enemies: None")
+            enemynames:Set("Enemy Name: None")
+        end
+
+        if hyperAFcooldown and hyperAFcooldown.Visible then
+            local hyperbosstimer = hyperAFcooldown.Title.Text
+            hypertimer:Set("❤️ Hyper Core: " .. hyperbosstimer)
+        else
+            hypertimer:Set("❤️ Hyper Core: ✅ Ready")
+        end
+
+        if slimeAFcooldown and slimeAFcooldown.Visible then
+            local slimebosstimer = slimeAFcooldown.Title.Text
+            slimetimer:Set("🦠 King Slime: " .. slimebosstimer)
+        else
+            slimetimer:Set("🦠 King Slime: ✅ Ready")
+        end
+
+        if krakenAFcooldown and krakenAFcooldown.Visible then
+            local krakenbosstimer = krakenAFcooldown.Title.Text
+            krakentimer:Set("🐙 Kraken: " .. krakenbosstimer)
+        else
+            krakentimer:Set("🐙 Kraken: ✅ Ready")
+        end
+    end
+end
+task.spawn(updLabels)
+
+local function autoAncientDig()  -- Auto Ancient Dig
+    while task.wait() do
+        if AAdig then
+            local minigameModule = require(game:GetService("ReplicatedStorage").Client.Minigame)
+            local current = minigameModule.Current    
+            if current and current.State then
+                local cells = current.State.Cells
+                for cellToClick, _ in pairs(cells) do
+                    rstorage.Event:FireServer("TryMinigameInput", cellToClick)
+                end
+            end
+        end
+    end
+end
+task.spawn(autoAncientDig)
 
 
 
---[[ PLAYER TAB ]]--
+--[[x] PLAYER TAB ]]--
 local gm = main:AddToggle({  -- Godmode
 	Name = "🛡️ Godmode",
 	Default = false,
@@ -268,62 +342,73 @@ local gm = main:AddToggle({  -- Godmode
             warn("[Debug] ✅ Enabled Godmode")
             notify("Godmode", "Enabled Godmode")
         else
-            lp.MaxHealth = 800
-            lp.Health = 800
+            lp.MaxHealth = 2000
+            lp.Health = 2000
         end
     end
 })
-teleports:AddDropdown({  -- Regions Teleport
-	Name = "🚀 Regions",
-	Default = "",
-	Options = {"The Blackmarket", "The Summit", "Magma Basin", "Gloomy Grotto", "Dusty Dunes", "Sunset Shores", "Frosty Peaks", "Auburn Woods", "Mellow Meadows", "Pet Park"},
+main:AddToggle({  -- Auto Collect Shrines
+	Name = "⚱️ Auto Collect Shrines",
+	Default = false,
 	Callback = function(Value)
-        if Value ~= "The Blackmarket" and Value ~= "The Summit" then
-		    rstorage.Event:FireServer("TeleportBeacon", Value, "Spawn")
-        else
-            rstorage.Event:FireServer("TeleportBeacon", "Magma Basin", Value)
+        getfenv().ACShrines = (Value and true or false)
+        local shrinesModule = require(game:GetService("ReplicatedStorage").Shared.Data.Shrines)
+        while ACShrines do wait()
+            for shrine, _ in pairs(shrinesModule) do
+                local shrinePrompt = ws.Shrines[shrine].Action:FindFirstChild("ProximityPrompt")
+                if shrinePrompt and shrinePrompt.Enabled then
+                    rstorage.Event:FireServer("UseShrine", shrine)
+                    notify("Shrines", "Collected " .. shrine .. " shrine")
+                    wait(1)
+                end
+            end
         end
-        warn("[Debug] ✅ Teleported to " .. Value)
-        notify("Teleport", "Teleported to " .. Value)
 	end
 })
-teleports:AddDropdown({  -- Shops Teleport
-    Name = "🏪 Shops",
-    Default = "",
-    Options = {"💰 Auburn Shop", "💰 Magic Shop", "💎 Gem Trader", "💎 Blackmarket"},
-    Callback = function(Value)
-        if Value == "💰 Auburn Shop" then
-            slp.Character:MoveTo(game.Workspace.Activations["auburn-shop"].Root.Position)
-        elseif Value == "💰 Magic Shop" then
-            slp.Character:MoveTo(game.Workspace.Activations["magic-shop"].Root.Position)
-        elseif Value == "💎 Gem Trader" then
-            slp.Character:MoveTo(game.Workspace.Activations["gem-trader"].Root.Position)
-        elseif Value == "💎 Blackmarket" then
-            slp.Character:MoveTo(game.Workspace.Activations["the-blackmarket"].Root.Position)
+main:AddToggle({  -- Auto Claim Quests
+	Name = "📜 Auto Claim Quests",
+	Default = false,
+	Callback = function(Value)
+        getfenv().AClaimQuest = (Value and true or false)
+        while AClaimQuest do wait()
+            local questnames = {"bruh-bounty", "sailor-treasure-hunt"}
+            for _, quest in pairs(questnames) do
+                rstorage.Event:FireServer("FinishedQuestDialog", quest)
+                wait(1)
+            end
         end
-        warn("[Debug] ✅ Teleported to " .. Value .. " shop")
-        notify("Teleport", "Teleported to " .. Value .. " shop")
-    end
+	end
 })
-teleports:AddDropdown({  -- Bosses Teleport
+
+teleports:AddDropdown({  -- Teleport to Region
+    Name = "🚀 Regions",
+    Default = "",
+    Options = {"Hyperwave Arcade", "The Blackmarket", "The Summit", "Magma Basin", "Gloomy Grotto", "Dusty Dunes", "Sunset Shores", "Frosty Peaks", "Auburn Woods", "Mellow Meadows", "Pet Park"},
+    Callback = teleportToRegion
+})
+teleports:AddDropdown({  -- Teleport to Activation
+    Name = "🏪 Activations",
+    Default = "",
+    Options = {"💰 Auburn Shop", "💰 Magic Shop", "💎 Gem Trader", "💎 Blackmarket", "💎 Talents", "👾 Prize Counter"},
+    Callback = teleportToActivation
+})
+teleports:AddDropdown({  -- Teleport to Boss
     Name = "⚔️ Bosses",
     Default = "",
-    Options = {"🐙 Kraken", "🦠 King Slime"},
-    Callback = function(Value)
-        if Value == "🐙 Kraken" then
-            slp.Character:MoveTo(game.Workspace.Bosses["the-kraken"].Gate.Activation.Root)
-        elseif Value == "🦠 King Slime" then
-            slp.Character:MoveTo(game.Workspace.Bosses["king-slime"].Gate.Activation.Root)
-        end
-        warn("[Debug] ✅ Teleported to " .. Value .. " boss")
-        notify("Teleport", "Teleported to " .. Value .. " boss")
-    end
+    Options = {"❤️ Hyper Core", "🐙 Kraken", "🦠 King Slime"},
+    Callback = teleportToBoss
 })
 
 powerups:AddDropdown({  -- Choose Powerup
 	Name = "⚡ Choose Powerup",
 	Default = "",
-	Options = {"Farm (Coin & XP)", "Coin Elixir", "XP Elixir", "Lucky Elixir", "Super Lucky Elixir", "Sea Elixir", "Timeful Tome"},
+    Save = true,
+    Flag = "powerup",
+	Options = {
+    "Farm (Coin & XP)", "Arcade (Gamer & Token)", "Gamer Elixir", "Token Elixir", 
+    "Coin Elixir", "XP Elixir", "Lucky Elixir", "Super Lucky Elixir",
+    "Sea Elixir", "Timeful Tome", "Prismatic Sundae", "Prismatic Elixir"
+    },
 	Callback = function(Value)
 		chosenPwr = Value
 	end
@@ -332,99 +417,129 @@ powerups:AddToggle({  -- Auto Use Powerups
 	Name = "⚡ Auto Use Powerups",
 	Default = false,
 	Callback = function(Value)
-        AUPowerups = Value
-        if AUPowerups then warn("[Debug] ✅ Enabled Auto Use Powerups") end
+        getfenv().AUPowerups = (Value and true or false)
+        while AUPowerups and chosenPwr ~= nil do wait()
+            local powerups = {
+                ["Gamer Elixir"] =       { sui.Buffs.Gamer, "Used Gamer Elixir" },
+                ["Token Elixir"] =       { sui.Buffs.Token, "Used Token Elixir" },
+                ["Coin Elixir"] =        { sui.Buffs.Treasure, "Used Coin Elixir" },
+                ["XP Elixir"] =          { sui.Buffs.Experienced, "Used XP Elixir" },
+                ["Lucky Elixir"] =       { sui.Buffs["Feeling Lucky"], "Used Lucky Elixir" },
+                ["Super Lucky Elixir"] = { sui.Buffs["Super Lucky"], "Used Super Lucky Elixir" },
+                ["Sea Elixir"] =         { sui.Buffs["Ocean's Blessing"], "Used Sea Elixir" },
+                ["Timeful Tome"] =       { sui.Buffs.Stopwatch, "Used Timeful Tome" },
+                ["Prismatic Sundae"] =   { sui.Buffs.Fortune, "Used Prismatic Sundae" },
+                ["Prismatic Elixir"] =   { sui.Buffs["Ultra Lucky"], "Used Prismatic Elixir" }
+            }
+            if chosenPwr == "Farm (Coin & XP)" then
+                useFarmPowerups()
+            elseif chosenPwr == "Arcade (Gamer & Token)" then
+                useArcadePowerups()
+            else
+                local powerupData = powerups[chosenPwr]
+                if powerupData then
+                    usePowerups(chosenPwr, powerupData[1], powerupData[2])
+                end
+            end
+        end
 	end
 })
 
 
---[[ AUTOMATION TAB ]]--
+--[[x] AUTOMATION TAB ]]--
 autobuy:AddToggle({  -- Buy Auburn Shop
 	Name = "💰 Auto Buy Auburn Shop",
 	Default = false,
 	Callback = function(Value)
-        ABAuburnShop = Value
-        if ABAuburnShop then warn("[Debug] ✅ Enabled Auto Buy Auburn Shop") end
+        getfenv().ABAuburnShop = (Value and true or false)
+        while ABAuburnShop do wait()
+            autoBuyShopItems("auburn-shop")
+        end
 	end
 })
 autobuy:AddToggle({  -- Buy Magic Shop
 	Name = "💰 Auto Buy Magic Shop",
 	Default = false,
 	Callback = function(Value)
-        ABMagicShop = Value
-        if ABMagicShop then warn("[Debug] ✅ Enabled Auto Buy Magic Shop") end
+        getfenv().ABMagicShop = (Value and true or false)
+        while ABMagicShop do wait()
+            autoBuyShopItems("magic-shop")
+        end
     end
 })
 autobuy:AddToggle({  -- Buy Gem Trader
 	Name = "💎 Auto Buy Gem Trader",
 	Default = false,
 	Callback = function(Value)
-        ABGemTrader = Value
-        if ABGemTrader then warn("[Debug] ✅ Enabled Auto Buy Gem Trader") end
+        getfenv().ABGemTrader = (Value and true or false)
+        while ABGemTrader do wait()
+            autoBuyShopItems("gem-trader")
+        end
 	end
 })
 autobuy:AddToggle({  -- Buy Blackmarket
 	Name = "💎 Auto Buy Blackmarket",
 	Default = false,
 	Callback = function(Value)
-        ABBlackmarket = Value
-        if ABBlackmarket then warn("[Debug] ✅ Enabled Auto Buy Blackmarket") end
+        getfenv().ABBlackmarket = (Value and true or false)
+        while ABBlackmarket do wait()
+            autoBuyShopItems("the-blackmarket")
+        end
     end
 })
 
-autoshrines:AddToggle({  -- Auto Collect Shrines
-	Name = "⚱️ Auto Collect Shrines",
-	Default = false,
-	Callback = function(Value)
-        ACShrines = Value
-        if ACShrines then warn("[Debug] ✅ Enabled Auto Collect shrines") end
-	end
-})
-
-fishing:AddSlider({  -- Auto Fish Delay
-	Name = "Casting Delay (Stable = 2.7)",
-	Min = 2.68,
-	Max = 2.75,
-	Default = 2.70,
+autoexchange:AddSlider({  -- Coins Amount
+	Name = "💰 Coins Amount",
+	Min = 1,
+	Max = 99,
+	Default = 1,
+    Save = true,
 	Color = Color3.fromRGB(55,55,55),
-	Increment = 0.01,
-	ValueName = "s",
+	Increment = 1,
+    Flag = "exchange_amount",
+	ValueName = "B",
 	Callback = function(Value)
-        fishingDelay = tonumber(Value)
+        chosenCoins = tonumber(Value)
 	end
 })
-fishing:AddToggle({  -- Auto Fish
-	Name = "🐟 Auto Fish",
+autoexchange:AddToggle({  -- Auto Exchange Coins
+	Name = "💰 > 💎 Auto Exchange Coins",
 	Default = false,
 	Callback = function(Value)
-        AFish = Value
-        if AFish then warn("[Debug] ✅ Enabled Auto Fish") end
-	end
-})
-fishing:AddToggle({  -- Auto Sell Fish
-	Name = "🐟 Auto Sell Fish",
-	Default = false,
-	Callback = function(Value)
-        ASFish = Value
-        if ASFish then warn("[Debug] ✅ Enabled Auto Sell Fish") end
-	end
-})
-
-quest:AddToggle({  -- Auto Claim All Quests
-	Name = "📜 Auto Claim All Quests",
-	Default = false,
-	Callback = function(Value)
-        AClaimQuest = Value
-        if AClaimQuest then warn("[Debug] ✅ Enabled Auto Claim All Quests") end
+        getfenv().AEcoins = (Value and true or false)
+        while AEcoins do wait()
+            local exchangeCooldown = ws.Map["Hyperwave Arcade"].Machines.Exchange.Timer.BillboardGui
+            if not exchangeCooldown.Enabled then
+                game:GetService("ReplicatedStorage").Shared.Framework.Network.Remote.Event:FireServer("CoinExchange", chosenCoins)
+                notify("Exchange", "Exchanged "..chosenCoins.."B Coins")
+                wait(1)
+            end
+        end
 	end
 })
 
 
 --[[ FARMING TAB ]]--
+afmobs:AddSlider({  -- Global Auto Kill Delay
+	Name = "Global Auto Kill Delay (Better Pets = Lower Value)",
+	Min = 0.25,
+	Max = 5,
+	Default = 0.25,
+    Save = true,
+	Color = Color3.fromRGB(55,55,55),
+	Increment = 0.25,
+    Flag = "globalkill_delay",
+	ValueName = "s",
+	Callback = function(Value)
+        opDelay = tonumber(Value)
+	end
+})
 afmobs:AddDropdown({  -- Auto Kill Type
     Name = "⚔️ Choose Type",
     Default = "",
-    Options = {"Walk", "Teleport"},
+    Save = true,
+    Flag = "autokill_type",
+    Options = {"Global", "Walk", "Teleport"},
     Callback = function(Value)
         chosenAFtype = Value
     end
@@ -433,236 +548,453 @@ afmobs:AddToggle({  -- Auto Kill Mobs
 	Name = "⚔️ Auto Kill Mobs",
 	Default = false,
 	Callback = function(Value)
-        AFkill = Value
-        if AFkill and chosenAFtype ~= nil then
-            gm:Set(true)
-            rstorage.Event:FireServer("UnequipMount")
-            warn("[Debug] ✅ Enabled Auto Kill Mobs [Type: "..chosenAFtype.."]")
-            notify("Auto Kill", "Enabled Auto Kill Mobs [Type: "..chosenAFtype.."]")
-        elseif AFkill and chosenAFtype == nil then
-            notify("Auto Kill", "⚠️ Enable Auto Kill Type")
-        end
-	end
-})
-
-afmobs2:AddSlider({  -- OP Auto Kill Delay
-	Name = "OP Auto Kill Delay (Better Pets = Lower Value)",
-	Min = 0.25,
-	Max = 5,
-	Default = 0.25,
-	Color = Color3.fromRGB(55,55,55),
-	Increment = 0.25,
-	ValueName = "s",
-	Callback = function(Value)
-        opDelay = tonumber(Value)
-	end
-})
-
-afmobs2:AddToggle({  -- OP Auto Kill Mobs
-	Name = "💸 OP Auto Kill Mobs",
-	Default = false,
-	Callback = function(Value)
-        AFkill2 = Value
-        if AFkill2 then
-            warn("[Debug] ✅ Enabled OP Auto Kill Mobs [Delay: "..opDelay.."]")
-            notify("Auto Kill", "Enabled OP Auto Kill Mobs [Delay: "..opDelay.."]")
-        end
-	end
-})
-afmobs2:AddToggle({
-	Name = "Debug",
-	Default = false,
-	Callback = function(Value)
-        AFkill2debug = Value
-	end
-})
-local function autoKillMobs2()
-    while true do
-        if AFkill2 then
-            for _, locationFolder in pairs(workspace.Markers.Enemies:GetChildren()) do
-                if locationFolder:IsA("Folder") then
-                    gBetaFinder(locationFolder:FindFirstChild("Default"))
-                    gBetaFinder(locationFolder:FindFirstChild("Armored"))
+        getfenv().AFkill = (Value and true or false)
+        if AFkill then
+            if chosenAFtype then
+                if chosenAFtype ~= "Global" then
+                    gm:Set(true)
+                    rstorage.Event:FireServer("UnequipMount")
                 end
+                notify("Auto Kill", "Enabled Auto Kill Mobs [Type: "..chosenAFtype.."]")
+            else
+                notify("Auto Kill", "⚠️ Enable Auto Kill Type")
             end
         end
-        wait()
-    end
-end
-task.spawn(autoKillMobs2)
+        while AFkill do wait()
+            autoKillMobs()
+        end
+	end
+})
 
-afkraken:AddTextbox({  -- Kraken LVL
-	Name = "🐙 Kraken Level (0 = Max)",
-	Default = "",
-	TextDisappear = false,
+afhypercore:AddSlider({  -- Hyper Core LVL
+	Name = "❤️ Hyper Core Level (0 = Max)",
+	Min = 0,
+	Max = 100,
+	Default = 0,
+    Save = true,
+	Color = Color3.fromRGB(55,55,55),
+	Increment = 1,
+    Flag = "hypercore_lvl",
+	ValueName = "",
 	Callback = function(Value)
-		chosenkrakenlvl = tonumber(Value)
+        chosenhyperlvl = tonumber(Value)
+	end
+})
+afhypercore:AddToggle({  -- Auto Kill Hyper Core
+	Name = "❤️ Auto Kill Hyper Core",
+	Default = false,
+	Callback = function(Value)
+        getfenv().AFhyper = (Value and true or false)
+        if AFhyper then notify("Auto Kill", "Enabled Auto Kill Hyper Core") end
+        while AFhyper do wait()
+            local currentPos = slp.Character and slp.Character.HumanoidRootPart.Position
+            if not hyperAFcooldown.Visible then
+                local hyperlvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["hyper-core"].Total.Text
+                local hyperLVL
+                if chosenhyperlvl == 0 then
+                    hyperLVL = tonumber(hyperlvlTextPath:match("%d+"))
+                    warn("[Debug] ❤️✅ Spawned Hyper Core [Level: Max]")
+                    notify("Auto Kill", "Spawned Hyper Core [Level: Max]")
+                else
+                    hyperLVL = chosenhyperlvl
+                    warn("[Debug] ❤️✅ Spawned Hyper Core [Level: " .. hyperLVL .. "]")
+                    notify("Auto Kill", "Spawned Hyper Core [Level: " .. hyperLVL .. "]")
+                end
+                rstorage.Function:InvokeServer("BossRequest", "hyper-core", hyperLVL)
+                if currentPos then wait(1.5)
+                    slp.Character:MoveTo(currentPos)
+                end
+                warn("[Debug] ❤️⚔️ Hyper Core Battle Started")
+                notify("Auto Kill", "Hyper Core Battle Started")
+                repeat
+                    wait()
+                until hyperAFcooldown.Visible
+                warn("[Debug] ❤️🏆 Defeated Hyper Core")
+                notify("Auto Kill", "Defeated Hyper Core")
+                wait(3)
+            end
+            if AURThyper then
+                wait(1)
+                rstorage.Event:FireServer("RespawnBoss", "hyper-core")
+            end
+        end
+	end
+})
+afhypercore:AddToggle({  -- Auto Use Tome For Hyper Core
+	Name = "💫 Use Respawn Tome",
+	Default = false,
+	Callback = function(Value)
+        AURThyper = Value
+	end
+})
+
+afkraken:AddSlider({  -- Kraken LVL
+	Name = "🐙 Kraken Level (0 = Max)",
+	Min = 0,
+	Max = 100,
+	Default = 0,
+    Save = true,
+	Color = Color3.fromRGB(55,55,55),
+	Increment = 1,
+    Flag = "kraken_lvl",
+	ValueName = "",
+	Callback = function(Value)
+        chosenkrakenlvl = tonumber(Value)
 	end
 })
 afkraken:AddToggle({  -- Auto Kill Kraken
 	Name = "🐙 Auto Kill Kraken",
 	Default = false,
 	Callback = function(Value)
-        AFkraken = Value
-        if AFkraken then
-            warn("[Debug] ✅ Enabled Auto Kill Kraken")
-            notify("Auto Kill", "Enabled Auto Kill Kraken")
+        getfenv().AFkraken = (Value and true or false)
+        if AFkraken then notify("Auto Kill", "Enabled Auto Kill Kraken") end
+        while AFkraken do wait()
+            local currentPos = slp.Character and slp.Character.HumanoidRootPart.Position
+            if not krakenAFcooldown.Visible then
+                local krakenlvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["the-kraken"].Total.Text
+                local krakenLVL
+                if chosenkrakenlvl == 0 then
+                    krakenLVL = tonumber(krakenlvlTextPath:match("%d+"))
+                    warn("[Debug] 🐙✅ Spawned Kraken [Level: Max]")
+                    notify("Auto Kill", "Spawned Kraken [Level: Max]")    
+                else
+                    krakenLVL = chosenkrakenlvl
+                    warn("[Debug] 🐙✅ Spawned Kraken [Level: " .. krakenLVL .. "]")
+                    notify("Auto Kill", "Spawned Kraken [Level: " .. krakenLVL .. "]")    
+                end
+                rstorage.Function:InvokeServer("BossRequest", "the-kraken", krakenLVL)
+                if currentPos then wait(1.5)
+                    slp.Character:MoveTo(currentPos)
+                end
+                warn("[Debug] 🐙⚔️ Kraken Battle Started")
+                notify("Auto Kill", "Kraken Battle Started")
+                repeat
+                    wait()
+                until krakenAFcooldown.Visible
+                warn("[Debug] 🐙🏆 Defeated Kraken")
+                notify("Auto Kill", "Defeated Kraken")
+                wait(3)
+            end
+            if AURTkraken then
+                wait(1)
+                rstorage.Event:FireServer("RespawnBoss", "the-kraken")
+            end
         end
 	end
 })
 afkraken:AddToggle({  -- Auto Use Tome For Kraken
-	Name = "Use Respawn Tome",
+	Name = "💫 Use Respawn Tome",
 	Default = false,
 	Callback = function(Value)
         AURTkraken = Value
-        if AURTkraken then
-            warn("[Debug] ✅ Enabled Use Respawn Tome For Kraken")
-        end
 	end
 })
 
-afkingslime:AddTextbox({  -- King Slime LVL
+afkingslime:AddSlider({  -- King Slime LVL
 	Name = "🦠 King Slime Level (0 = Max)",
-	Default = "",
-	TextDisappear = false,
+	Min = 0,
+	Max = 100,
+	Default = 0,
+    Save = true,
+	Color = Color3.fromRGB(55,55,55),
+	Increment = 1,
+    Flag = "kingslime_lvl",
+	ValueName = "",
 	Callback = function(Value)
-		chosenslimelvl = tonumber(Value)
+        chosenslimelvl = tonumber(Value)
 	end
 })
 afkingslime:AddToggle({  -- Auto Kill King Slime
 	Name = "🦠 Auto Kill King Slime",
 	Default = false,
 	Callback = function(Value)
-        AFslime = Value
-        if AFslime then
-            warn("[Debug] ✅ Enabled Auto Kill King Slime")
-            notify("Auto Kill", "Enabled Auto Kill King Slime")
+        getfenv().AFslime = (Value and true or false)
+        if AFslime then notify("Auto Kill", "Enabled Auto Kill King Slime") end
+        while AFslime do wait()
+            local currentPos = slp.Character and slp.Character.HumanoidRootPart.Position
+            if not slimeAFcooldown.Visible then
+                local slimelvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["king-slime"].Total.Text
+                local slimeLVL
+                if chosenslimelvl == 0 then
+                    slimeLVL = tonumber(slimelvlTextPath:match("%d+"))
+                    warn("[Debug] 🦠✅ Spawned King Slime [Level: Max]")
+                    notify("Auto Kill", "Spawned King Slime [Level: Max]")
+                else
+                    slimeLVL = chosenslimelvl
+                    warn("[Debug] 🦠✅ Spawned King Slime [Level: " .. slimeLVL .. "]")
+                    notify("Auto Kill", "Spawned King Slime [Level: " .. slimeLVL .. "]")
+                end
+                rstorage.Function:InvokeServer("BossRequest", "king-slime", slimeLVL)
+                if currentPos then wait(1.5)
+                    slp.Character:MoveTo(currentPos)
+                end
+                warn("[Debug] 🦠⚔️ King Slime Battle Started")
+                notify("Auto Kill", "King Slime Battle Started")
+                repeat
+                    wait()
+                until slimeAFcooldown.Visible
+                warn("[Debug] 🦠🏆 Defeated King Slime")
+                notify("Auto Kill", "Defeated King Slime")
+                wait(3)
+            end
+            if AURTkingslime then
+                wait(1)
+                rstorage.Event:FireServer("RespawnBoss", "king-slime")
+            end
         end
 	end
 })
 afkingslime:AddToggle({  -- Auto Use Tome For King Slime
-	Name = "Use Respawn Tome",
+	Name = "💫 Use Respawn Tome",
 	Default = false,
 	Callback = function(Value)
         AURTkingslime = Value
-        if AURTkingslime then
-            warn("[Debug] ✅ Enabled Use Respawn Tome For King Slime")
+	end
+})
+
+
+--[[ MINIGAMES TAB ]]--
+ticketsMg:AddToggle({
+	Name = "🦴 Auto Ancient Dig [WIP]",
+	Default = false,
+	Callback = function(Value)
+        AAdig = Value
+        if AAdig then
+            warn("[Debug] ✅ Enabled Auto Ancient Dig")
+            notify("Minigames", "Enabled Auto Ancient Dig")
+        end
+	end
+})
+ticketsMg:AddToggle({
+	Name = "🎶 Auto Dance Off [WIP]",
+	Default = false,
+	Callback = function(Value)
+        ADoff = Value
+        if ADoff then
+            warn("[Debug] ✅ Enabled Auto Dance Off")
+            notify("Minigames", "Enabled Auto Dance Off")
+        end
+	end
+})
+ticketsMg:AddToggle({  -- Auto Robot Claw
+	Name = "🕹️ Auto Robot Claw",
+	Default = false,
+	Callback = function(Value)
+        getfenv().ARclaw = (Value and true or false)
+        if ARclaw then teleportToRegion("Hyperwave Arcade") wait(.5) end
+        local synced = false
+        while ARclaw do wait()
+            local important = sui.Inventory.Frame.Main.Content.Items.List["Important Things"].Grid.Content
+            for _, child in ipairs(important:GetChildren()) do
+                if child:IsA("Frame") then
+                    synced = true
+                    break
+                end
+            end
+            if not synced then wait(2) notify("Minigames", "⚠️ Open Inventory > Items To Sync") end
+            local tickets = important:FindFirstChild("GoldenTickets")
+            if synced and tickets then
+                rstorage.Function:InvokeServer("MinigameRequest", "robot-claw", getfenv().minigamePetID)
+                wait(2.5)
+                print("r-c petid: "..getfenv().minigamePetID)
+                warn("[Debug] 🕹️✅ Robot Claw Game Started")
+                notify("Minigames", "Robot Claw Game Started")
+                local endTime = os.time() + 70
+                repeat
+                    rstorage.Event:FireServer("TryMinigameInput", true)
+                    wait(0.1)
+                until os.time() >= endTime
+                warn("[Debug] 🕹️🏆 Robot Claw Game Ended")
+                notify("Minigames", "Robot Claw Game Ended")
+                wait(5)
+            end
+        end
+    end
+})
+ticketsMg:AddToggle({  -- Auto Cube Drop
+	Name = "🎲 Auto Cube Drop",
+	Default = false,
+	Callback = function(Value)
+        getfenv().ACdrop = (Value and true or false)
+        if ACdrop then
+            notify("Minigames", "Enabled Auto Cube Drop")
+            teleportToRegion("Hyperwave Arcade")
+            wait(.5)
+        end
+        while ACdrop do wait(.1)
+            rstorage.Function:InvokeServer("PlayCubeDrop")
+        end
+	end
+})
+
+fishing:AddSlider({  -- Auto Fish Delay
+	Name = "Casting Delay (Stable = 2.7)",
+	Min = 2.48,
+	Max = 3.20,
+	Default = 2.48,
+    Save = true,
+	Color = Color3.fromRGB(55,55,55),
+	Increment = 0.02,
+    Flag = "autofish_delay",
+	ValueName = "s",
+	Callback = function(Value)
+        fishingDelay = tonumber(Value)
+	end
+})
+fishing:AddDropdown({  -- Fish Region
+    Name = "🐟 Choose Region",
+    Default = "",
+    Save = true,
+    Flag = "autofish_region",
+    Options = {"Hyperwave Arcade", "Magma Basin", "Gloomy Grotto", "Dusty Dunes", "Sunset Shores", "Frosty Peaks", "Auburn Woods", "Mellow Meadows", "Pet Park"},
+    Callback = function(Value)
+        local fishingMap = {
+            ["Hyperwave Arcade"] = Vector3.new(1350, 2, -1546),
+            ["Magma Basin"] =      Vector3.new(1285, 184, -447),
+            ["Gloomy Grotto"] =    Vector3.new(1638, 50, -86),
+            ["Dusty Dunes"] =      Vector3.new(1562, 50, 258),
+            ["Sunset Shores"] =    Vector3.new(1343, 38, 643),
+            ["Frosty Peaks"] =     Vector3.new(717, 70, 575),
+            ["Auburn Woods"] =     Vector3.new(769, 22, 1273),
+            ["Mellow Meadows"] =   Vector3.new(1036, 22, 1381),
+            ["Pet Park"] =         Vector3.new(1189, 10, 1587)
+        }
+        fishingRegion = Value
+        fishingVec = fishingMap[Value] or ""
+    end
+})
+fishing:AddToggle({  -- Auto Fish
+    Name = "🐟 Auto Fish",
+    Default = false,
+    Callback = function(Value)
+        AFish = Value
+        if AFish and fishingRegion ~= nil then
+            rstorage.Event:FireServer("StartFishing", fishingRegion, fishingVec)
+            warn("[Debug] ✅ Enabled Auto Fish")
+            notify("Auto Fish", "Started Fishing in " .. fishingRegion)
+            while AFish and fishingRegion ~= nil do
+                startFishing()
+            end
+        elseif AFish and fishingRegion == nil then
+            notify("Auto Fish", "⚠️ Choose Region")
+        else
+            rstorage.Event:FireServer("StopFishing")
+        end
+    end
+})
+fishing:AddToggle({  -- Auto Sell Fish
+	Name = "🐟 > 💰 Auto Sell Fish",
+	Default = false,
+	Callback = function(Value)
+        getfenv().ASFish = (Value and true or false)
+        while ASFish do wait(.1)
+            rstorage.Event:FireServer("SellFish")
         end
 	end
 })
 
 
---[[ CRAFTING TAB ]]--
+--[[x] CRAFTING TAB ]]--
 local craftingMap = {
-    ["Sea Elixir"] = "sea-elixir",
-    ["Legendary Cube"] = "legendary-cube",
-    ["Elite Mystery Egg"] = "elite-mystery-egg",
-    ["XP Elixir"] = "xp-elixir",
+    ["Rare Cube"] = "rare-cube",
     ["Epic Cube"] = "epic-cube",
-    ["Coin Elixir"] = "coin-elixir",
+    ["Legendary Cube"] = "legendary-cube",
     ["Mystery Egg"] = "mystery-egg",
-    ["Rare Cube"] = "rare-cube"
-}
-local activeslot1 = false local activeslot2 = false local activeslot3 = false
-ACslot1:AddDropdown({  -- [Slot 1] Choose Item
-    Name = "Choose Item",
-    Default = "",
-    Options = {"Sea Elixir", "Coin Elixir", "XP Elixir", "Legendary Cube", "Epic Cube", "Elite Mystery Egg", "Mystery Egg", "Rare Cube"},
-    Callback = function(Value)
-        chosenACItem1 = craftingMap[Value] or ""
-    end
-})
-ACslot1:AddTextbox({  -- [Slot 1] Amount
-	Name = "Amount",
-	Default = "",
-	TextDisappear = false,
-	Callback = function(Value)
-		chosenACAmount1 = tonumber(Value)
-	end
-})
-ACslot1:AddToggle({  -- [Slot 1] Auto Craft
-	Name = "🛠️ Auto Craft",
-	Default = false,
-	Callback = function(Value)
-        activeslot1 = Value
-        if activeslot1 then warn("[Debug] ✅ Enabled Auto Craft [Slot 1]") end
-	end
-})
-ACslot2:AddDropdown({  -- [Slot 2] Choose Item To Craft
-    Name = "Choose Item",
-    Default = "",
-    Options = {"Sea Elixir", "Coin Elixir", "XP Elixir", "Legendary Cube", "Epic Cube", "Elite Mystery Egg", "Mystery Egg", "Rare Cube"},
-    Callback = function(Value)
-        chosenACItem2 = craftingMap[Value] or ""
-    end
-})
-ACslot2:AddTextbox({  -- [Slot 2] Amount
-	Name = "Amount",
-	Default = "",
-	TextDisappear = false,
-	Callback = function(Value)
-		chosenACAmount2 = tonumber(Value)
-	end
-})
-ACslot2:AddToggle({  -- [Slot 2] Auto Craft
-	Name = "🛠️ Auto Craft",
-	Default = false,
-	Callback = function(Value)
-        activeslot2 = Value
-        if activeslot2 then warn("[Debug] ✅ Enabled Auto Craft [Slot 2]") end
-	end
-})
-ACslot3:AddDropdown({  -- [Slot 3] Choose Item To Craft
-    Name = "Choose Item",
-    Default = "",
-    Options = {"Sea Elixir", "Coin Elixir", "XP Elixir", "Legendary Cube", "Epic Cube", "Elite Mystery Egg", "Mystery Egg", "Rare Cube"},
-    Callback = function(Value)
-        chosenACItem3 = craftingMap[Value] or ""
-    end
-})
-ACslot3:AddTextbox({  -- [Slot 3] Amount
-	Name = "Amount",
-	Default = "",
-	TextDisappear = false,
-	Callback = function(Value)
-		chosenACAmount3 = tonumber(Value)
-	end
-})
-ACslot3:AddToggle({  -- [Slot 3] Auto Craft
-	Name = "🛠️ Auto Craft",
-	Default = false,
-	Callback = function(Value)
-        activeslot3 = Value
-        if activeslot3 then warn("[Debug] ✅ Enabled Auto Craft [Slot 3]") end
-	end
-})
+    ["Elite Mystery Egg"] = "elite-mystery-egg",
+    ["Coin Elixir"] = "coin-elixir",
+    ["XP Elixir"] = "xp-elixir",
+    ["Sea Elixir"] = "sea-elixir",
+    ["Token Elixir"] = "token-elixir"}
+local function craftingSlot(slot, index)  -- Auto Craft
+    slot:AddDropdown({
+        Name = "🛠️ Choose Item",
+        Default = "",
+        Options = {"Rare Cube", "Epic Cube", "Legendary Cube", "Mystery Egg", "Elite Mystery Egg", "Coin Elixir", "XP Elixir", "Sea Elixir", "Token Elixir"},
+        Callback = function(Value)
+            _G["chosenACItem"..index] = craftingMap[Value] or ""
+        end
+    })
+    slot:AddTextbox({
+        Name = "🛠️ Amount To Craft",
+        Default = "",
+        TextDisappear = false,
+        Callback = function(Value)
+            _G["chosenACAmount"..index] = tonumber(Value)
+        end
+    })
+    slot:AddToggle({
+        Name = "🛠️ Auto Craft",
+        Default = false,
+        Callback = function(Value)
+            _G["activeslot"..index] = Value
+            local claim = sui.Crafting.Frame.Body["Slot"..index].Content.Claim
+            while _G["activeslot"..index] do
+                wait(0.1)
+                if claim.Visible then
+                    rstorage.Event:FireServer("ClaimCrafting", index)
+                else
+                    rstorage.Event:FireServer("StartCrafting", index, _G["chosenACItem"..index], _G["chosenACAmount"..index])
+                end
+            end
+        end
+    })
+end
+craftingSlot(ACslot1, 1) craftingSlot(ACslot2, 2) craftingSlot(ACslot3, 3)
 
 
---[[ EGGS TAB ]]--
+--[[x] EGGS TAB ]]--
 agmain:AddDropdown({  -- Choose Egg
     Name = "🥚 Choose Egg",
     Default = "Elite Mystery Egg",
-    Options = {"Elite Mystery Egg", "Mystery Egg"},
+    Save = true,
+    Flag = "autohatch_egg",
+    Options = {"Prismatic Mystery Egg", "Elite Mystery Egg", "Mystery Egg"},
     Callback = function(Value)
         chosenEgg = Value
     end
 })
+
 agmain:AddToggle({  -- Auto Hatch
 	Name = "🥚 Auto Hatch",
-	Default = false,
+    Default = false,
 	Callback = function(Value)
-        autohatch = Value
-        if autohatch then warn("[Debug] ✅ Enabled Auto Hatch") end
+        getfenv().autohatch = Value
+        while autohatch do wait(.1)
+            rstorage.Function:InvokeServer("TryHatchEgg", chosenEgg)
+        end
 	end
 })
 
-
---[[ MISC TAB ]]--
+--[[x] MISC TAB ]]--
+cfg:AddButton({  -- Copy Equipped PetID To Clipboard
+	Name = "🐾 Copy Equipped PetID To Clipboard",
+	Callback = function()
+        local pets = {}
+        local invActive = false
+        local inv = sui.Inventory.Frame.Main.Content.Pets.Grid.Content
+        for _, child in ipairs(inv:GetChildren()) do
+            if child:IsA("Frame") then
+                invActive = true
+            end
+        end
+        if not invActive then
+            notify("Equipped Pet", "⚠️ Open Inventory > Pets > Equip your pet")
+        else
+            for i,v in ipairs(inv:GetDescendants()) do
+                if v.Name == "Equipped" and v.Visible then
+                    local pet = tostring(v.Parent.Parent)
+                    setclipboard(pet)
+                    notify("Equipped Pet", "Copied equipped PetID to clipboard, put it in getfenv().minigamePetID")
+                    return
+                end
+            end
+        end
+  	end
+})
 mgui:AddButton({  -- FPS Booster
 	Name = "🚀 FPS Booster",
 	Callback = function()
         notify("FPS Booster", "Credits: github.com/fdvll")
-        wait(1)
         loadstring(game:HttpGet("https://raw.githubusercontent.com/fdvll/pet-simulator-99/main/cpuReducer.lua"))()
   	end
 })
@@ -670,265 +1002,37 @@ mgui:AddToggle({  -- Disable Snow
 	Name = "❄️ Disable Snow",
 	Default = false,
 	Callback = function(Value)
-        snowStatus = Value
-        if snowStatus then
-            ws.Rendered.Snow.ParticleEmitter.Enabled = false
-        else
-            ws.Rendered.Snow.ParticleEmitter.Enabled = true
-        end
+        ws.Rendered.Snow.ParticleEmitter.Enabled = not Value
 	end
 })
-mother:AddButton({  -- Redeem All Codes
+mOther:AddButton({  -- Redeem All Codes
 	Name = "🏷️ Redeem All Codes",
-	Callback = redeemAllCodes
+    Callback = function()
+        local codesModule = require(game:GetService("ReplicatedStorage").Shared.Data.Codes)
+        for code, _ in pairs(codesModule) do
+            rstorage.Function:InvokeServer("RedeemCode", code)
+            wait(0.5)
+        end
+        notify("Codes", "Redeemed All Codes")
+    end
 })
-mother:AddButton({  -- Rejoin
+mOther:AddButton({  -- Rejoin
 	Name = "🔄 Rejoin",
 	Callback = function()
-        notify("Rejoin", "Rejoining...")
-        wait(1)
+        notify("Rejoin", "Rejoining...") wait(1)
         game:GetService("TeleportService"):Teleport(game.PlaceId, slp)
   	end
 })
-mother:AddButton({  -- Server Hop
+mOther:AddButton({  -- Server Hop
 	Name = "⏩ Server Hop",
 	Callback = function()
-        local sh = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
-        notify("Server Hopping...", "Credits: github.com/LeoKholYt")
-        wait(1)
-        sh:Teleport(game.PlaceId)
+        local serverHop = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
+        notify("Server Hopping...", "Credits: github.com/LeoKholYt") wait(1)
+        serverHop:Teleport(game.PlaceId)
   	end
 })
-mother:AddButton({  -- Destroy UI
+mOther:AddButton({  -- Destroy UI
 	Name = "❌ Destroy UI",
-	Callback = function()
-        lib:Destroy()
-  	end
+	Callback = function() lib:Destroy() end
 })
-
--- LOGIC
-while task.wait() do
-    if AUPowerups then
-        local CoinDur = sui.Buffs.Treasure
-        local XPDur = sui.Buffs.Experienced
-        local LuckyDur = sui.Buffs["Feeling Lucky"]
-        local SuperLuckyDur = sui.Buffs["Super Lucky"]
-        local SeaDur = sui.Buffs["Ocean's Blessing"]
-        local TimefulDur = sui.Buffs.Stopwatch
-        if chosenPwr == "Farm (Coin & XP)" then
-            if not CoinDur.Visible and not XPDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "Coin Elixir")
-                rstorage.Event:FireServer("UsePowerup", "XP Elixir")
-                notify("Powerups", "Used Coin and XP Elixirs")
-            end
-        elseif chosenPwr == "Coin Elixir" then
-            if not CoinDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "Coin Elixir")
-                notify("Powerups", "Used Coin Elixir")
-            end
-        elseif chosenPwr == "XP Elixir" then
-            if not XPDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "XP Elixir")
-                notify("Powerups", "Used XP Elixir")
-            end
-        elseif chosenPwr == "Lucky Elixir" then
-            if not LuckyDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "Lucky Elixir")
-                notify("Powerups", "Used Lucky Elixir")
-            end
-        elseif chosenPwr == "Super Lucky Elixir" then
-            if not SuperLuckyDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "Super Lucky Elixir")
-                notify("Powerups", "Used Super Lucky Elixir")
-            end
-        elseif chosenPwr == "Sea Elixir" then
-            if not SeaDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "Sea Elixir")
-                notify("Powerups", "Used Sea Elixir")
-            end
-        elseif chosenPwr == "Timeful Tome" then
-            if not TimefulDur.Visible then
-                rstorage.Event:FireServer("UsePowerup", "Timeful Tome")
-                notify("Powerups", "Used Timeful Tome")
-            end
-        end
-        wait(1)
-    end
-    if ACShrines then
-        for shrine, _ in pairs(shrinesModule) do
-            local shrinePrompt = ws.Shrines[shrine].Action:FindFirstChild("ProximityPrompt")
-            if shrinePrompt and shrinePrompt.Enabled then
-                rstorage.Event:FireServer("UseShrine", shrine)
-                notify("Shrines", "Collected " .. shrine .. " shrine")
-                wait(1)
-            end
-        end
-    end
-    if AClaimQuest then
-        local questnames = {"bruh-bounty", "sailor-treasure-hunt"}
-        for _, quest in pairs(questnames) do
-            rstorage.Event:FireServer("FinishedQuestDialog", quest)
-            wait(1)
-        end
-    end
-    if AFish then
-        if slp then
-            rstorage.Event:FireServer("StartCastFishing")
-            wait(fishingDelay)
-        end
-    end
-    if ASFish then
-        rstorage.Event:FireServer("SellFish")
-        wait(.1)
-    end
-
-    checkKrakenBoss()
-    if AFkraken then
-        local krakenAFcooldown = ws.Bosses["the-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
-        local player = game.Players.LocalPlayer
-        local currentPos = player.Character and player.Character.HumanoidRootPart.Position
-        if not krakenAFcooldown.Visible then
-            local krakenlvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["the-kraken"].Total.Text
-            local krakenLVL
-            if chosenkrakenlvl == 0 then
-                krakenLVL = tonumber(krakenlvlTextPath:match("%d+"))
-            else
-                krakenLVL = chosenkrakenlvl
-            end
-            wait(1)
-            rstorage.Function:InvokeServer("BossRequest", "the-kraken", krakenLVL)
-            warn("[Debug] ✅🐙 Spawned Kraken [Level: " .. krakenLVL .. "]")
-            notify("Auto Kill", "Spawned Kraken [Level: " .. krakenLVL .. "]")
-            if currentPos then
-                wait(2)
-                player.Character:MoveTo(currentPos)
-            end
-            warn("[Debug] ⚔️🐙 Kraken Battle Started")
-            repeat
-                wait(1)
-            until krakenAFcooldown.Visible
-            warn("[Debug] 🏆🐙 Defeated Kraken")
-            notify("Auto Kill", "Defeated Kraken")
-            wait(3)
-        end
-        wait(1)
-        if AURTkraken then
-            rstorage.Event:FireServer("RespawnBoss", "the-kraken")
-        end
-        wait(3)
-    end
-
-    checkSlimeBoss()
-    if AFslime then
-        local slimeAFcooldown = ws.Bosses["king-slime"].Display.SurfaceGui.BossDisplay.Cooldown
-        local player = game.Players.LocalPlayer
-        local currentPos = player.Character and player.Character.HumanoidRootPart.Position
-        if not slimeAFcooldown.Visible then
-            local slimelvlTextPath = sui.Debug.Stats.Frame.List.BossesDefeated.Extra["king-slime"].Total.Text
-            local slimeLVL
-            if chosenslimelvl == 0 then
-                slimeLVL = tonumber(slimelvlTextPath:match("%d+"))
-            else
-                slimeLVL = chosenslimelvl
-            end
-            wait(1)
-            rstorage.Function:InvokeServer("BossRequest", "king-slime", slimeLVL)
-            warn("[Debug] ✅🦠 Spawned King Slime [Level: " .. slimeLVL .. "]")
-            notify("Auto Kill", "Spawned King Slime [Level: " .. slimeLVL .. "]")
-            if currentPos then
-                wait(2)
-                player.Character:MoveTo(currentPos)
-            end
-            warn("[Debug] ⚔️🦠 King Slime Battle Started")
-            repeat
-                wait(1)
-            until slimeAFcooldown.Visible
-            warn("[Debug] 🏆🦠 Defeated King Slime")
-            notify("Auto Kill", "Defeated King Slime")
-        end
-        wait(1)
-        if AURTkingslime then
-            rstorage.Event:FireServer("RespawnBoss", "king-slime")
-        end
-        wait(3)
-    end
-
-    if ABAuburnShop then
-        autoBuyShopItems("auburn-shop")
-    end
-    if ABMagicShop then
-        autoBuyShopItems("magic-shop")
-    end
-    if ABGemTrader then
-        autoBuyShopItems("gem-trader")
-    end
-    if ABBlackmarket then
-        autoBuyShopItems("the-blackmarket")
-    end
-
-    updateEnemies()
-    updateEggsCount()
-    updateEnemyCount()
-    checkEvents()
-
-    if AFkill then
-        local foundEnemy = false
-        if #enemies > 0 then    
-            for _, enemy in ipairs(enemies) do
-                if enemy:FindFirstChild("Hitbox") then
-                    local hitbox = enemy.Hitbox
-                    local char = slp.Character
-                    local pfs = game:GetService("PathfindingService")
-                    local humanoid = char:FindFirstChildOfClass("Humanoid")
-                    local humanoidRootPart = char:FindFirstChild("HumanoidRootPart")
-                    if humanoidRootPart and not foundEnemy then
-                        foundEnemy = true
-                        if chosenAFtype == "Walk" then
-                            local path = pfs:FindPathAsync(humanoidRootPart.Position, hitbox.Position)
-                            local waypoint = path:GetWaypoints()
-                            local oldpoints = waypoint
-                            
-                            if waypoint and waypoint[3] then
-                                humanoid:MoveTo(waypoint[3].Position)
-                                humanoid.Jump = false
-                            else
-                                for i = 3, #oldpoints do
-                                    humanoid:MoveTo(oldpoints[i].Position)	
-                                end
-                            end
-
-                        elseif chosenAFtype == "Teleport" then
-                            wait(1)
-                            humanoidRootPart.CFrame = hitbox.CFrame
-                            wait(2.5)
-                            break
-                        end
-                    end
-                end
-            end
-        end
-    end
-
-    if activeslot1 then
-        rstorage.Event:FireServer("StartCrafting", 1, chosenACItem1, chosenACAmount1)
-        wait(1)
-        rstorage.Event:FireServer("ClaimCrafting", 1)
-    end
-    if activeslot2 then
-        rstorage.Event:FireServer("StartCrafting", 2, chosenACItem2, chosenACAmount2)
-        wait(1)
-        rstorage.Event:FireServer("ClaimCrafting", 2)
-    end
-    if activeslot3 then
-        rstorage.Event:FireServer("StartCrafting", 3, chosenACItem3, chosenACAmount3)
-        wait(1)
-        rstorage.Event:FireServer("ClaimCrafting", 3)
-    end
-
-    if autohatch then
-        rstorage.Function:InvokeServer("TryHatchEgg", chosenEgg)
-        wait(.01)
-    end
-end
-
 lib:Init()
