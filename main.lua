@@ -1,6 +1,7 @@
 local placeId = game.PlaceId
 
 if placeId == 16510724413 then
+    getfenv().minigamePetID = "nil"
     loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/games/PetCatchers.lua')))()
 elseif placeId == 5991163185 then
     loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/games/SprayPaint.lua')))()
