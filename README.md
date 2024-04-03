@@ -1,4 +1,3 @@
-## AIO - Embrace open source
+## AIO.vip [Open Source]
 ######
-    getfenv().minigamePetID = "nil"
-    loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/games/PetCatchers.lua')))()
+    loadstring(game:HttpGet('https://raw.githubusercontent.com/illumaware/c/main/main.lua'))()
