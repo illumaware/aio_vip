@@ -1,12 +1,13 @@
-local placeId = game.PlaceId
+repeat task.wait() until game:IsLoaded()
+local scripts = {
+    [16510724413] = "PetCatchers",
+    [5991163185]  = "SprayPaint",
+    [8884433153]  = "CollectAllPets"
+}
 
-if placeId == 16510724413 then
-    getfenv().minigamePetID = "nil"
-    loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/games/PetCatchers.lua')))()
-elseif placeId == 5991163185 then
-    loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/games/SprayPaint.lua')))()
-elseif placeId == 8884433153 then
-    loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/games/CollectAllPets.lua')))()
+local name = scripts[game.PlaceId]
+if name then
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/illumaware/c/main/games/"..name..".lua"))()
 else
-    print("[AIO] No scripts found for "..placeId.." placeId")
+    warn("[AIO] PlaceId "..game.PlaceId.." is not supported")
 end
