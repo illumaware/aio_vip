@@ -1,4 +1,7 @@
-repeat task.wait() until game:IsLoaded()
+repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
+if getgenv().aioExec then return end
+getgenv().aioExec = true
+
 local scripts = {
     [16510724413] = "PetCatchers",
     [5991163185]  = "SprayPaint",
