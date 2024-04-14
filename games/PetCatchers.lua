@@ -932,7 +932,7 @@ mOther:AddButton({  -- Server Hop
 	Name = "⏩ Server Hop",
 	Callback = function()
         notify("Server Hopping...", "Credits: github.com/LeoKholYt")
-        loadstring(game:HttpGet"https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true")():Teleport(game.PlaceId)
+        loadstring(game:HttpGet("https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true"))():Teleport(game.PlaceId)
   	end
 })
 mOther:AddButton({  -- Destroy UI
