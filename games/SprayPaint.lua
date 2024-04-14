@@ -73,7 +73,7 @@ misc:AddButton({  -- Rejoin
 misc:AddButton({  -- Server Hop
 	Name = "⏩ Server Hop",
 	Callback = function()
-        loadstring(game:HttpGet"https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true")():Teleport(game.PlaceId)
+        loadstring(game:HttpGet("https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true"))():Teleport(game.PlaceId)
   	end
 })
 misc:AddButton({  -- Destroy UI
