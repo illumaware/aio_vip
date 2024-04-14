@@ -1,6 +1,5 @@
-repeat task.wait()until game:IsLoaded()
-local lib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/debug/BetterOrion.lua')))()
-local window = lib:MakeWindow({Name = "[Collect All Pets] AIO", HidePremium = true, SaveConfig = false, ConfigFolder = ""})
+local lib = loadstring(game:HttpGet(('https://github.com/illumaware/c/blob/main/debug/BetterOrion.lua?raw=true')))()
+local window = lib:MakeWindow({Name = "[Collect All Pets] AIO", HidePremium = true, SaveConfig = false, IntroEnabled = false})
 local home = window:MakeTab({ Name = "Home", Icon = "rbxassetid://7733960981" })
 local upgrades = window:MakeTab({ Name = "Upgrades", Icon = "rbxassetid://7743875962" })
 local autoeggs = window:MakeTab({ Name = "Eggs", Icon = "rbxassetid://8997385940" })
@@ -144,22 +143,21 @@ misc:AddButton({  -- FPS Booster
 	Callback = function()
         lib:MakeNotification({ Name = "FPS Booster", Content = "Credits: github.com/fdvll", Image = "rbxassetid://7733911828", Time = 5 })
         wait(1)
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/fdvll/pet-simulator-99/main/cpuReducer.lua"))()
+        loadstring(game:HttpGet("https://github.com/fdvll/pet-simulator-99/blob/main/cpuReducer.lua?raw=true"))()
   	end
 })
 misc:AddButton({  -- Rejoin
 	Name = "🔄 Rejoin",
 	Callback = function()
-        game:GetService("TeleportService"):Teleport(game.PlaceId, slp)
+        game:GetService("TeleportService"):Teleport(game.PlaceId, lp)
   	end
 })
 misc:AddButton({  -- Server Hop
 	Name = "⏩ Server Hop",
 	Callback = function()
-        local sh = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")()
         lib:MakeNotification({ Name = "Server Hopping...", Content = "Credits: github.com/LeoKholYt", Image = "rbxassetid://7733911828", Time = 5 })
         wait(1)
-        sh:Teleport(game.PlaceId)
+        loadstring(game:HttpGet("https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true"))():Teleport(game.PlaceId)
   	end
 })
 misc:AddButton({  -- Destroy UI
@@ -220,3 +218,4 @@ while task.wait() do
         end
     end
 end
+lib:Init()
