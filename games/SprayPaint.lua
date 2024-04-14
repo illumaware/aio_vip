@@ -1,4 +1,4 @@
-local lib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/illumaware/c/main/debug/BetterOrion.lua')))()
+local lib = loadstring(game:HttpGet(('https://github.com/illumaware/c/blob/main/debug/BetterOrion.lua?raw=true')))()
 local window = lib:MakeWindow({Name = "[Spray Paint] AIO", HidePremium = true, SaveConfig = false, IntroEnabled = false})
 local home = window:MakeTab({ Name = "Home", Icon = "rbxassetid://7733960981" })
 local status = home:AddLabel("Status: ⏳ Waiting")
@@ -25,7 +25,6 @@ local function updateScore()  -- Update Labels
         end
     end
 end task.spawn(updateScore)
-
 local function startGame()  -- Start Button Click
     fireclickdetector(startBPath)
 end
@@ -62,7 +61,7 @@ home:AddToggle({  -- Auto Play Whac-A-Teddy
 misc:AddButton({  -- FPS Booster
 	Name = "🚀 FPS Booster",
 	Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/fdvll/pet-simulator-99/main/cpuReducer.lua"))() -- Credits: github.com/fdvll
+        loadstring(game:HttpGet("https://github.com/fdvll/pet-simulator-99/blob/main/cpuReducer.lua?raw=true"))() -- Credits: github.com/fdvll
   	end
 })
 misc:AddButton({  -- Rejoin
@@ -74,11 +73,11 @@ misc:AddButton({  -- Rejoin
 misc:AddButton({  -- Server Hop
 	Name = "⏩ Server Hop",
 	Callback = function()
-        local serverhop = loadstring(game:HttpGet"https://raw.githubusercontent.com/LeoKholYt/roblox/main/lk_serverhop.lua")() -- Credits: github.com/LeoKholYt
-        serverhop:Teleport(game.PlaceId)
+        loadstring(game:HttpGet"https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true")():Teleport(game.PlaceId)
   	end
 })
 misc:AddButton({  -- Destroy UI
 	Name = "❌ Destroy UI",
 	Callback = function() lib:Destroy() end    
 })
+lib:Init()
