@@ -1,6 +1,5 @@
 repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
-if getgenv().aioExec then return end
-getgenv().aioExec = true
+if getgenv().aioExec then return end getgenv().aioExec = true
 
 local scripts = {
     [16510724413] = "PetCatchers",
@@ -10,9 +9,9 @@ local scripts = {
     [11572573905]  = "PressureWashSimulator2"
 }
 
-local name = scripts[game.PlaceId]
-if name then
-    loadstring(game:HttpGet("https://github.com/illumaware/c/blob/main/games/"..name..".lua?raw=true"))()
+local sName = scripts[game.PlaceId]
+if sName then
+    loadstring(game:HttpGet("https://github.com/illumaware/c/blob/main/games/"..sName..".lua?raw=true"))()
 else
     warn("[AIO] PlaceId "..game.PlaceId.." is not supported")
 end
