@@ -1,4 +1,4 @@
-getgenv().aioInfo = {ver = "2.5", build = "stable"}
+getgenv().aioInfo = {ver = "2.6", build = "stable"}
 
 local lib = loadstring(game:HttpGet('https://github.com/illumaware/c/blob/main/debug/BetterOrion.lua?raw=true'))()
 local window = lib:MakeWindow({Name = "[Pet Catchers] AIO", HidePremium = true, SaveConfig = true, ConfigFolder = "AIO_VIP", IntroEnabled = false})
@@ -30,8 +30,8 @@ local afhypercore = autofarm:AddSection({ Name = "Hyper Core" })
 local hypertimer = afhypercore:AddLabel("❤️ Hyper Core is not available")
 local afkraken = autofarm:AddSection({ Name = "Kraken" })
 local krakentimer = afkraken:AddLabel("🐙 Kraken is not available")
-local afkingslime = autofarm:AddSection({ Name = "King Slime" })
-local slimetimer = afkingslime:AddLabel("🦠 King Slime is not available")
+local afkingslime = autofarm:AddSection({ Name = "Slime" })
+local slimetimer = afkingslime:AddLabel("🦠 Slime is not available")
 
 --[[ Minigames ]]--
 local minigames = window:MakeTab({ Name = "Minigames", Icon = "rbxassetid://7733799901" })
@@ -75,6 +75,8 @@ local remote = rstorage.Shared.Framework.Network.Remote
 local hyperAFcooldown = ws.Bosses["hyper-core"].Display.SurfaceGui.BossDisplay.Cooldown
 local slimeAFcooldown = ws.Bosses["king-slime"].Display.SurfaceGui.BossDisplay.Cooldown
 local krakenAFcooldown = ws.Bosses["the-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
+local mechKrakenAFcooldown = ws.Bosses["mech-kraken"].Display.SurfaceGui.BossDisplay.Cooldown
+local queenSlimeAFcooldown = ws.Bosses["queen-slime"].Display.SurfaceGui.BossDisplay.Cooldown
 local eventsModule = require(rstorage.Shared.Data.Events)
 local shrinesModule = require(rstorage.Shared.Data.Shrines)
 local codesModule = require(rstorage.Shared.Data.Codes)
@@ -84,6 +86,14 @@ local minigameModule = require(rstorage.Client.Minigame)
 local localdata = require(rstorage.Client.Framework.Services.LocalData).Get()
 local coins, gems, tokens, tickets = localdata.Coins, localdata.Gems, localdata.Tokens, localdata.GoldenTickets
 
+local shops = {
+    { tName = "💰 Auto Buy Auburn Shop", shopName = "auburn-shop" },
+    { tName = "💰 Auto Buy Magic Shop", shopName = "magic-shop" },
+    { tName = "💎 Auto Buy Gem Trader", shopName = "gem-trader" },
+    { tName = "💎 Auto Buy Blackmarket", shopName = "the-blackmarket" },
+    { tName = "👾 Auto Buy Prize Counter", shopName = "prize-counter" },
+    { tName = "💎 Auto Buy Traveling Merchant", shopName = "traveling-merchant" }
+}
 local activations = {
     ["💰 Auburn Shop"] = ws.Activations["auburn-shop"].Root.Position,
     ["💰 Magic Shop"] = ws.Activations["magic-shop"].Root.Position,
@@ -94,9 +104,11 @@ local activations = {
     ["💎 Traveling Merchant"] = ws.Activations["traveling-merchant"].Root.Position
 }
 local bosses = {
-    ["❤️ Hyper Core"] = ws.Bosses["hyper-core"].Gate.Activation.Root.Position,
-    ["🐙 Kraken"]     = ws.Bosses["the-kraken"].Gate.Activation.Root.Position,
-    ["🦠 King Slime"] = ws.Bosses["king-slime"].Gate.Activation.Root.Position
+    ["👿 Mech Kraken"] = ws.Hardcore["mech-kraken"].Prompt.Position,
+    ["👿 Queen Slime"] = ws.Hardcore["queen-slime"].Prompt.Position,
+    ["❤️ Hyper Core"]  = ws.Bosses["hyper-core"].Gate.Activation.Root.Position,
+    ["🐙 Kraken"]      = ws.Bosses["the-kraken"].Gate.Activation.Root.Position,
+    ["🦠 King Slime"]  = ws.Bosses["king-slime"].Gate.Activation.Root.Position
 }
 local fishingMap = {
     ["Hyperwave Arcade"] = Vector3.new(1350, 2, -1546),
@@ -110,6 +122,8 @@ local fishingMap = {
     ["Pet Park"]         = Vector3.new(1189, 10, 1587)
 }
 local powerupsMap = {
+    ["Battle Stew"] =        {sui.Buffs.Battle, "Used Battle Stew"},
+    ["Egg Elixir"] =         {sui.Buffs.Hatcher, "Used Egg Elixir"},
     ["Gamer Elixir"] =       {sui.Buffs.Gamer, "Used Gamer Elixir"},
     ["Token Elixir"] =       {sui.Buffs.Token, "Used Token Elixir"},
     ["Coin Elixir"] =        {sui.Buffs.Treasure, "Used Coin Elixir"},
@@ -134,7 +148,7 @@ local craftingMap = {
 }
 
 --[[ FUNCTIONS ]]--
-slp.Idled:connect(function() vu:CaptureController() vu:ClickButton2(Vector2.new()) end)  -- AntiAFK
+loadstring(game:HttpGet('https://github.com/illumaware/c/blob/main/debug/AntiAFK.lua?raw=true'))()  -- AntiAFK
 local a=getrawmetatable(game)setreadonly(a,false)local b=a.__namecall;a.__namecall=newcclosure(function(self,...)  -- Godmode
     local c=getnamecallmethod()if c=='TakeDamage'and self:IsDescendantOf(chr)then return end;return b(self,...)
 end)
@@ -187,7 +201,7 @@ local function updLabels()
 
         --[[Farming]]--
         if hyperAFcooldown and hyperAFcooldown.Visible then hypertimer:Set("❤️ Hyper Core: " .. hyperAFcooldown.Title.Text) else hypertimer:Set("❤️ Hyper Core: ✅ Ready") end
-        if slimeAFcooldown and slimeAFcooldown.Visible then slimetimer:Set("🦠 King Slime: " .. slimeAFcooldown.Title.Text) else slimetimer:Set("🦠 King Slime: ✅ Ready") end
+        if slimeAFcooldown and slimeAFcooldown.Visible then slimetimer:Set("🦠 Slime: " .. slimeAFcooldown.Title.Text) else slimetimer:Set("🦠 Slime: ✅ Ready") end
         if krakenAFcooldown and krakenAFcooldown.Visible then krakentimer:Set("🐙 Kraken: " .. krakenAFcooldown.Title.Text) else krakentimer:Set("🐙 Kraken: ✅ Ready") end
 
         --[[Minigames]]--
@@ -216,9 +230,9 @@ local function redeem()
         remote.Event:FireServer("OpenWorldChest", chest)
     end
 end redeem()
-local function autoBuyShopItems(shopName)
-    for i = 1, 4 do
-        remote.Event:FireServer("BuyShopItem", shopName, i, 1)
+local function autoBuyShopItems(shop)
+    for i = 1, 6 do
+        remote.Event:FireServer("BuyShopItem", shop, i, 1)
     end
 end
 local function teleportToRegion(region)
@@ -343,16 +357,10 @@ main:AddToggle({  -- Auto Collect Shrines
         while ACShrines do wait()
             for shrine, _ in pairs(shrinesModule) do
                 local shrinePrompt = ws.Shrines[shrine].Action:FindFirstChild("ProximityPrompt")
-                if shrinePrompt and shrinePrompt.Enabled then
-                    if shrine == "ticket" and tickets < 10 then
-                        remote.Event:FireServer("UseShrine", shrine)
-                        notify("Shrines", "Collected "..shrine.." shrine")
-                        wait(1)
-                    elseif shrine ~= "ticket" then
-                        remote.Event:FireServer("UseShrine", shrine)
-                        notify("Shrines", "Collected "..shrine.." shrine")
-                        wait(1)
-                    end
+                if shrinePrompt and shrinePrompt.Enabled and (shrine ~= "ticket" or tickets < 10) then
+                    remote.Event:FireServer("UseShrine", shrine)
+                    notify("Shrines", "Collected "..shrine.." shrine")
+                    wait(1)
                 end
             end
         end
@@ -388,7 +396,7 @@ teleports:AddDropdown({  -- Teleport to Activation
 teleports:AddDropdown({  -- Teleport to Boss
     Name = "⚔️ Bosses",
     Default = "",
-    Options = {"❤️ Hyper Core", "🐙 Kraken", "🦠 King Slime"},
+    Options = {"👿 Mech Kraken", "👿 Queen Slime", "❤️ Hyper Core", "🐙 Kraken", "🦠 King Slime"},
     Callback = teleportToBoss
 })
 
@@ -398,9 +406,9 @@ powerups:AddDropdown({  -- Choose Powerup
     Save = true,
     Flag = "powerup",
 	Options = {
-    "Farm (Coin + XP)", "Arcade (Gamer + Token + Lucky)", "Gamer Elixir", "Token Elixir", 
-    "Coin Elixir", "XP Elixir", "Lucky Elixir", "Super Lucky Elixir",
-    "Sea Elixir", "Timeful Tome", "Prismatic Sundae", "Prismatic Elixir"
+    "Farm (Coin + XP)", "Arcade (Gamer + Token + Lucky)", "Battle Stew", "Egg Elixir",
+    "Gamer Elixir", "Token Elixir", "Coin Elixir", "XP Elixir", "Lucky Elixir",
+    "Super Lucky Elixir", "Sea Elixir", "Timeful Tome", "Prismatic Sundae", "Prismatic Elixir"
     },
 	Callback = function(Value)
 		chosenPwr = Value
@@ -428,62 +436,20 @@ powerups:AddToggle({  -- Auto Use Powerups
 
 
 --[[x] AUTOMATION TAB ]]--
-autobuy:AddToggle({  -- Auto Buy Auburn Shop
-	Name = "💰 Auto Buy Auburn Shop",
-	Default = false,
-	Callback = function(Value)
-        getfenv().ABAuburnShop = (Value and true or false)
-        while ABAuburnShop do wait()
-            autoBuyShopItems("auburn-shop")
+for _, shopsInfo in ipairs(shops) do  -- Auto Buy Shops
+    autobuy:AddToggle({ Name = shopsInfo.tName, Default = false,
+        Callback = function(Value)
+            getfenv()["AB" .. shopsInfo.shopName] = (Value and true or false)
+            while getfenv()["AB" .. shopsInfo.shopName] do wait()
+                autoBuyShopItems(shopsInfo.shopName)
+            end
         end
-	end
-})
-autobuy:AddToggle({  -- Auto Buy Magic Shop
-	Name = "💰 Auto Buy Magic Shop",
-	Default = false,
-	Callback = function(Value)
-        getfenv().ABMagicShop = (Value and true or false)
-        while ABMagicShop do wait()
-            autoBuyShopItems("magic-shop")
-        end
-    end
-})
-autobuy:AddToggle({  -- Auto Buy Gem Trader
-	Name = "💎 Auto Buy Gem Trader",
-	Default = false,
-	Callback = function(Value)
-        getfenv().ABGemTrader = (Value and true or false)
-        while ABGemTrader do wait()
-            autoBuyShopItems("gem-trader")
-        end
-	end
-})
-autobuy:AddToggle({  -- Auto Buy Blackmarket
-	Name = "💎 Auto Buy Blackmarket",
-	Default = false,
-	Callback = function(Value)
-        getfenv().ABBlackmarket = (Value and true or false)
-        while ABBlackmarket do wait()
-            autoBuyShopItems("the-blackmarket")
-        end
-    end
-})
-autobuy:AddToggle({  -- Auto Buy Traveling Merchant
-	Name = "💎 Auto Buy Traveling Merchant",
-	Default = false,
-	Callback = function(Value)
-        getfenv().ABTravelingMerchant = (Value and true or false)
-        while ABTravelingMerchant do wait()
-            autoBuyShopItems("traveling-merchant")
-        end
-	end
-})
+    })
+end
 
 autoexchange:AddSlider({  -- Coins Amount
 	Name = "💰 Coins Amount",
-	Min = 1,
-	Max = 99,
-	Default = 1,
+	Min = 1, Max = 99, Default = 1,
     Save = true,
 	Color = Color3.fromRGB(55,55,55),
 	Increment = 1,
@@ -538,9 +504,7 @@ afmobs:AddToggle({  -- Auto Kill Mobs
 
 afhypercore:AddSlider({  -- Hyper Core LVL
 	Name = "❤️ Hyper Core Level (0 = Max)",
-	Min = 0,
-	Max = 100,
-	Default = 25,
+	Min = 0, Max = 100, Default = 25,
     Save = true,
 	Color = Color3.fromRGB(55,55,55),
 	Increment = 1,
@@ -573,7 +537,7 @@ afhypercore:AddToggle({  -- Auto Kill Hyper Core
         end
 	end
 })
-afhypercore:AddToggle({  -- Auto Use Tome For Hyper Core
+afhypercore:AddToggle({  -- Use Respawn Tome for Hyper Core
 	Name = "💫 Use Respawn Tome",
 	Default = false,
 	Callback = function(Value)
@@ -583,9 +547,7 @@ afhypercore:AddToggle({  -- Auto Use Tome For Hyper Core
 
 afkraken:AddSlider({  -- Kraken LVL
 	Name = "🐙 Kraken Level (0 = Max)",
-	Min = 0,
-	Max = 100,
-	Default = 25,
+	Min = 0, Max = 100, Default = 25,
     Save = true,
 	Color = Color3.fromRGB(55,55,55),
 	Increment = 1,
@@ -593,6 +555,13 @@ afkraken:AddSlider({  -- Kraken LVL
 	ValueName = "",
 	Callback = function(Value)
         chosenkrakenlvl = tonumber(Value)
+	end
+})
+afkraken:AddToggle({  -- Hardcore Kraken
+	Name = "👿 Hardcore",
+	Default = false,
+	Callback = function(Value)
+        hardcoreKraken = Value
 	end
 })
 afkraken:AddToggle({  -- Auto Kill Kraken
@@ -603,22 +572,24 @@ afkraken:AddToggle({  -- Auto Kill Kraken
         if AFkraken then notify("Auto Kill", "Enabled Auto Kill Kraken") end
         while AFkraken do wait()
             local currentPos = chr and humRootPart.Position
-            if not krakenAFcooldown.Visible then
-                local krakenLVL = chosenkrakenlvl == 0 and localdata.BossRecords["the-kraken"] + 1 or chosenkrakenlvl
-                remote.Function:InvokeServer("BossRequest", "the-kraken", krakenLVL)
-                notify("Auto Kill", "Spawned Kraken [Level: "..krakenLVL.."]")
+            local krakenType = hardcoreKraken and "mech-kraken" or "the-kraken"
+            local cooldown = hardcoreKraken and mechKrakenAFcooldown or krakenAFcooldown
+            local krakenLVL = chosenkrakenlvl == 0 and localdata.BossRecords[krakenType] + 1 or chosenkrakenlvl
+            if not cooldown.Visible then
+                remote.Function:InvokeServer("BossRequest", krakenType, krakenLVL)
+                notify("Auto Kill", "Spawned "..(hardcoreKraken and "Hardcore " or "").."Kraken [Level: "..krakenLVL.."]")
                 if currentPos then wait(1.5) chr:MoveTo(currentPos) end
-                notify("Auto Kill", "Kraken Battle Started")
-                repeat wait() until krakenAFcooldown.Visible
-                notify("Auto Kill", "Defeated Kraken")
-                if webURL then sendEmbed("Defeated Kraken [Level: "..krakenLVL.."]") end
-                wait(3)
+                notify("Auto Kill", (hardcoreKraken and "Hardcore " or "").."Kraken Battle Started")
+                repeat wait() until cooldown.Visible
+                notify("Auto Kill", "Defeated "..(hardcoreKraken and "Hardcore " or "").."Kraken")
+                if webURL then sendEmbed("Defeated "..(hardcoreKraken and "Hardcore " or "").."Kraken [Level: "..krakenLVL.."]") end
             end
-            if AURTkraken then wait(1) remote.Event:FireServer("RespawnBoss", "the-kraken") end
+            wait(3)
+            if AURTkraken then wait(1) remote.Event:FireServer("RespawnBoss", krakenType) end
         end
 	end
 })
-afkraken:AddToggle({  -- Auto Use Tome For Kraken
+afkraken:AddToggle({  -- Use Respawn Tome for Kraken
 	Name = "💫 Use Respawn Tome",
 	Default = false,
 	Callback = function(Value)
@@ -626,48 +597,55 @@ afkraken:AddToggle({  -- Auto Use Tome For Kraken
 	end
 })
 
-afkingslime:AddSlider({  -- King Slime LVL
-	Name = "🦠 King Slime Level (0 = Max)",
-	Min = 0,
-	Max = 100,
-	Default = 25,
+afkingslime:AddSlider({  -- Slime LVL
+	Name = "🦠 Slime Level (0 = Max)",
+	Min = 0, Max = 100, Default = 25,
     Save = true,
 	Color = Color3.fromRGB(55,55,55),
 	Increment = 1,
-    Flag = "kingslime_lvl",
+    Flag = "slime_lvl",
 	ValueName = "",
 	Callback = function(Value)
         chosenslimelvl = tonumber(Value)
 	end
 })
-afkingslime:AddToggle({  -- Auto Kill King Slime
-	Name = "🦠 Auto Kill King Slime",
+afkingslime:AddToggle({  -- Hardcore Slime
+	Name = "👿 Hardcore",
+	Default = false,
+	Callback = function(Value)
+        hardcoreSlime = Value
+	end
+})
+afkingslime:AddToggle({  -- Auto Kill Slime
+	Name = "🦠 Auto Kill Slime",
 	Default = false,
 	Callback = function(Value)
         getfenv().AFslime = (Value and true or false)
         if AFslime then notify("Auto Kill", "Enabled Auto Kill King Slime") end
         while AFslime do wait()
             local currentPos = chr and humRootPart.Position
-            if not slimeAFcooldown.Visible then
-                local slimeLVL = chosenslimelvl == 0 and localdata.BossRecords["king-slime"] + 1 or chosenslimelvl
-                remote.Function:InvokeServer("BossRequest", "king-slime", slimeLVL)
-                notify("Auto Kill", "Spawned King Slime [Level: "..slimeLVL.."]")
+            local slimeType = hardcoreSlime and "queen-slime" or "king-slime"
+            local cooldown = hardcoreSlime and queenSlimeAFcooldown or slimeAFcooldown
+            local slimeLVL = chosenslimelvl == 0 and localdata.BossRecords[slimeType] + 1 or chosenslimelvl
+            if not cooldown.Visible then
+                remote.Function:InvokeServer("BossRequest", slimeType, slimeLVL)
+                notify("Auto Kill", "Spawned "..(hardcoreSlime and "Hardcore " or "").."Slime [Level: "..slimeLVL.."]")
                 if currentPos then wait(1.5) chr:MoveTo(currentPos) end
-                notify("Auto Kill", "King Slime Battle Started")
-                repeat wait() until slimeAFcooldown.Visible
-                notify("Auto Kill", "Defeated King Slime")
-                if webURL then sendEmbed("Defeated King Slime [Level: "..slimeLVL.."]") end
-                wait(3)
+                notify("Auto Kill", (hardcoreSlime and "Hardcore " or "").."Slime Battle Started")
+                repeat wait() until cooldown.Visible
+                notify("Auto Kill", "Defeated "..(hardcoreSlime and "Hardcore " or "").."Slime")
+                if webURL then sendEmbed("Defeated "..(hardcoreSlime and "Hardcore " or "").."Slime [Level: "..slimeLVL.."]") end
             end
-            if AURTkingslime then wait(1) remote.Event:FireServer("RespawnBoss", "king-slime") end
+            wait(3)
+            if AURTslime then wait(1) remote.Event:FireServer("RespawnBoss", slimeType) end
         end
 	end
 })
-afkingslime:AddToggle({  -- Auto Use Tome For King Slime
+afkingslime:AddToggle({  -- Use Respawn Tome for Slime
 	Name = "💫 Use Respawn Tome",
 	Default = false,
 	Callback = function(Value)
-        AURTkingslime = Value
+        AURTslime = Value
 	end
 })
 
@@ -686,23 +664,6 @@ end
 
 --[[
 ticketsMg:AddToggle({
-	Name = "🦴 Auto Ancient Dig [WIP]",
-	Default = false,
-	Callback = function(Value)
-        getfenv().AAdig = (Value and true or false)
-        if AAdig then notify("Minigames", "Enabled Auto Ancient Dig") end
-        while AAdig do wait()
-            local current = minigameModule.Current    
-            if current and current.State then
-                local cells = current.State.Cells
-                for cellToClick, _ in pairs(cells) do
-                    remote.Event:FireServer("TryMinigameInput", cellToClick)
-                end
-            end
-        end    
-	end
-})
-ticketsMg:AddToggle({
 	Name = "🎶 Auto Dance Off [WIP]",
 	Default = false,
 	Callback = function(Value)
@@ -715,27 +676,67 @@ ticketsMg:AddToggle({
 })
 ]]--
 
+ticketsMg:AddToggle({  -- Auto Ancient Dig
+	Name = "🦴 Auto Ancient Dig [WIP]",
+	Default = false,
+	Callback = function(Value)
+        getfenv().AAdig = (Value and true or false)
+        if AAdig then remote.Function:InvokeServer("LoadRegion", "Dusty Dunes") notify("Minigames", "Enabled Auto Ancient Dig") end
+        while AAdig do wait()
+            if tickets >= 1 then
+                remote.Function:InvokeServer("MinigameRequest", "ancient-dig", petID)
+                wait(2.5)
+                notify("Minigames", "Ancient Dig Game Started")
+                local endTime = os.time() + 60
+                repeat
+                    remote.Event:FireServer("TryMinigameInput", tostring(math.random(1, 11).."-"..math.random(1, 11)))
+                    wait()
+                until os.time() >= endTime
+                notify("Minigames", "Ancient Dig Game Ended")
+                wait(5)
+            end
+        end    
+	end
+})
+ticketsMg:AddToggle({  -- Auto Memory Match
+	Name = "🐚 Auto Memory Match",
+	Default = false,
+	Callback = function(Value)
+        getfenv().AMmatch = (Value and true or false)
+        if AMmatch then remote.Function:InvokeServer("LoadRegion", "Atlantis") notify("Minigames", "Enabled Auto Memory Match") end
+        while AMmatch do wait()
+            if tickets >= 1 then
+                remote.Function:InvokeServer("MinigameRequest", "memory-match", petID)
+                wait(2.5)
+                notify("Minigames", "Memory Match Game Started")
+                local endTime = os.time() + 60
+                for i = 1, 20 do remote.Event:FireServer("TryMinigameInput", i) wait(.08) end    
+                repeat
+                    remote.Event:FireServer("TryMinigameInput", math.random(1, 20))
+                    wait()
+                until os.time() >= endTime
+                notify("Minigames", "Memory Match Game Ended")
+                wait(5)
+            end
+        end
+    end
+})
 ticketsMg:AddToggle({  -- Auto Robot Claw
 	Name = "🕹️ Auto Robot Claw",
 	Default = false,
 	Callback = function(Value)
         getfenv().ARclaw = (Value and true or false)
-        if ARclaw then
-            remote.Function:InvokeServer("LoadRegion", "Hyperwave Arcade")
-            notify("Minigames", "Enabled Auto Robot Claw")
-        end
+        if ARclaw then remote.Function:InvokeServer("LoadRegion", "Hyperwave Arcade") notify("Minigames", "Enabled Auto Robot Claw") end
         while ARclaw do wait()
             if tickets >= 1 then
                 remote.Function:InvokeServer("MinigameRequest", "robot-claw", petID)
                 wait(2.5)
-                warn("[Debug] 🕹️✅ Robot Claw Game Started")
                 notify("Minigames", "Robot Claw Game Started")
                 local endTime = os.time() + 60
                 repeat
                     remote.Event:FireServer("TryMinigameInput", true)
                     wait(.05)
                 until os.time() >= endTime
-                warn("[Debug] 🕹️🏆 Robot Claw Game Ended")
                 notify("Minigames", "Robot Claw Game Ended")
                 wait(5)
             end
@@ -747,10 +748,7 @@ ticketsMg:AddToggle({  -- Auto Cube Drop
 	Default = false,
 	Callback = function(Value)
         getfenv().ACdrop = (Value and true or false)
-        if ACdrop then
-            remote.Function:InvokeServer("LoadRegion", "Hyperwave Arcade")
-            notify("Minigames", "Enabled Auto Cube Drop")
-        end
+        if ACdrop then remote.Function:InvokeServer("LoadRegion", "Hyperwave Arcade") notify("Minigames", "Enabled Auto Cube Drop") end
         while ACdrop do wait(.1)
             remote.Function:InvokeServer("PlayCubeDrop")
         end
@@ -841,16 +839,14 @@ pets:AddToggle({  -- Auto Catch Pets
 	Callback = function(Value)
         getfenv().autocatch = (Value and true or false)
         while autocatch do wait()
-            pcall(function()
-                for i,v in pairs(ws.Rendered.Pets.World:GetChildren()) do
-                    if not autocatch then break end
-                    if v.ClassName == "Model" and getPetStars(v) >= 4 then
-                        remote.Function:InvokeServer("CapturePet", v.Name, "Legendary")
-                    elseif v.ClassName == "Model" and getPetStars(v) <= 4 then
-                        remote.Function:InvokeServer("CapturePet", v.Name, "Epic")
-                    end
+            for i,v in pairs(ws.Rendered.Pets.World:GetChildren()) do
+                if not autocatch then break end
+                if v.ClassName == "Model" and getPetStars(v) >= 4 then
+                    remote.Function:InvokeServer("CapturePet", v.Name, "Legendary")
+                elseif v.ClassName == "Model" and getPetStars(v) <= 4 then
+                    remote.Function:InvokeServer("CapturePet", v.Name, "Epic")
                 end
-            end)
+            end
         end
 	end
 })
@@ -881,12 +877,11 @@ eggs:AddToggle({  -- Auto Hatch Eggs
 mgui:AddButton({  -- FPS Booster
 	Name = "🚀 FPS Booster",
 	Callback = function()
-        notify("FPS Booster", "Credits: github.com/fdvll")
-        loadstring(game:HttpGet("https://github.com/fdvll/pet-simulator-99/blob/main/cpuReducer.lua?raw=true"))()
+        loadstring(game:HttpGet("https://github.com/fdvll/pet-simulator-99/blob/main/cpuReducer.lua?raw=true"))() -- Credits: github.com/fdvll
   	end
 })
-mgui:AddToggle({  -- Always Show Tokens
-	Name = "👾 Always Show Tokens",
+mgui:AddToggle({  -- Show Tokens
+	Name = "👾 Show Tokens",
 	Default = false,
 	Callback = function(Value)
         getfenv().showTokens = (Value and true or false)
@@ -913,8 +908,8 @@ mgui:AddToggle({  -- Disable Snow
 	end
 })
 
-mOther:AddTextbox({  -- Set Discord Webhook
-    Name = "🔗 Set Discord Webhook",
+mOther:AddTextbox({  -- Discord Webhook
+    Name = "🔗 Discord Webhook",
     Default = "",
     TextDisappear = true,
     Callback = function(Value)
@@ -924,15 +919,13 @@ mOther:AddTextbox({  -- Set Discord Webhook
 mOther:AddButton({  -- Rejoin
 	Name = "🔄 Rejoin",
 	Callback = function()
-        notify("Rejoin", "Rejoining...")
         tp:Teleport(game.PlaceId, slp)
   	end
 })
 mOther:AddButton({  -- Server Hop
 	Name = "⏩ Server Hop",
 	Callback = function()
-        notify("Server Hopping...", "Credits: github.com/LeoKholYt")
-        loadstring(game:HttpGet("https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true"))():Teleport(game.PlaceId)
+        loadstring(game:HttpGet("https://github.com/LeoKholYt/roblox/blob/main/lk_serverhop.lua?raw=true"))():Teleport(game.PlaceId) -- Credits: github.com/LeoKholYt
   	end
 })
 mOther:AddButton({  -- Destroy UI
