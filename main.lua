@@ -14,7 +14,8 @@ local scripts = {
 
 local sName = scripts[game.PlaceId]
 if sName then
+    warn("["..game.PlaceId.."] ✅ Supported game found, loading "..sName..".lua")
     loadstring(game:HttpGet("https://github.com/illumaware/c/blob/main/games/"..sName..".lua?raw=true"))()
 else
-    warn("[AIO] PlaceId "..game.PlaceId.." is not supported")
+    warn("["..game.PlaceId.."] ❌ This game is not supported yet")
 end
