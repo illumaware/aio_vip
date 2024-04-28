@@ -8,7 +8,8 @@ local scripts = {
     [16524008257] = "AnimeRNG",
     [11572573905] = "PressureWashSimulator2",
     [189707]      = "NaturalDisasterSurvival",
-    [16993380837] = "RNGGods"
+    [16993380837] = "RNGGods",
+    [16828215247] = "RNGRollers"
 }
 
 local sName = scripts[game.PlaceId]
